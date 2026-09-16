@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/mc/:path*",
-      "destination": "https://ТВОЙ-NGROK.ngrok-free.app/:path*"
+      "destination": "https:///a3d2-76-164-203-135.ngrok-free.app/:path*"
     }
   ]
 }
