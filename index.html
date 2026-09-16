@@ -1217,7 +1217,7 @@
     </div>
 
     <script>
-        const IP_ADDRESS = "https://a3d2-76-164-203-135.ngrok-free.app"; // Обнови свой Ngrok тут!
+        const API_BASE = "/mc"; // Обнови свой Ngrok тут!
 
 
         // --- ИДЕНТИФИКАЦИЯ / ЗАПОМИНАНИЕ ПОЛЬЗОВАТЕЛЯ ---
@@ -1544,16 +1544,11 @@
         async function giveMap(id) {
             const mapId = Number(id);
         
-            if (!Number.isInteger(mapId) || mapId < 0) {
-                console.error("[TROLL_OS] Неверный ID:", id);
-                return;
-            }
-        
             try {
                 console.log("[TROLL_OS] GIVE MAP:", mapId);
         
                 const response = await fetch(
-                    `/mc/give-map?id=${encodeURIComponent(mapId)}`
+                    `${API_BASE}/give-map?id=${encodeURIComponent(mapId)}`
                 );
         
                 const text = await response.text();
@@ -1564,10 +1559,10 @@
                     throw new Error(`HTTP ${response.status}: ${text}`);
                 }
         
-                showToast(`🗺️ Карта #${mapId} выдана`);
+                showToast(`🗺️ КАРТА #${mapId} ВЫДАНА`);
             } catch (e) {
                 console.error("[TROLL_OS] Ошибка выдачи карты:", e);
-                showToast(`❌ Не удалось выдать карту #${mapId}`);
+                showToast(`❌ ОШИБКА ВЫДАЧИ КАРТЫ #${mapId}`);
             }
         }
 
@@ -1811,25 +1806,27 @@
         }
 
         // Чистая функция отправки на сервер
-        function baseSendCmd(command) {
-            TROLL_COMMAND_COUNT++;
-            sessionStorage.setItem('trollCommandCount', String(TROLL_COMMAND_COUNT));
-            const totalKey='trollPurgeCommandTotal_'+TROLL_UID;
-            const total=Number(localStorage.getItem(totalKey)||0)+1;
-            localStorage.setItem(totalKey,String(total));
-            const gateProfile=getHeatCost(command);
-            updatePurgeQuestFromActivity(command, gateProfile);
-            
-            // Логируем эффект для системного монитора
-            trackLiveEvent(command); 
-            
-            const url = IP_ADDRESS + "/execute?cmd=" + encodeURIComponent(command);
-            return fetch(url, { method: "GET", headers: { "ngrok-skip-browser-warning": "true" } })
-            .then(res => { if(!res.ok) throw new Error("Connection failed"); return res.text(); })
-            .then(() => { showToast("Команда выполнена"); renderStats(); })
-            .catch(err => { showToast("Ошибка связи с сервером", true); renderStats(); });
+        async function sendCmd(cmd) {
+            try {
+                const response = await fetch(
+                    `${API_BASE}/execute?cmd=${encodeURIComponent(cmd)}`
+                );
+        
+                const text = await response.text();
+        
+                console.log("[TROLL_OS] CMD:", cmd);
+                console.log("[TROLL_OS] RESPONSE:", text);
+        
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${text}`);
+                }
+        
+                return text;
+            } catch (e) {
+                console.error("[TROLL_OS] Ошибка связи с сервером:", e);
+                showToast("❌ ОШИБКА СВЯЗИ С СЕРВЕРОМ");
+            }
         }
-
         // --- ПРОВЕРКИ HEAT И ФОРМИРОВАНИЕ БРОНИ ---
         function giveFragileArmor() {
             const isModern = document.getElementById('mc-version').value === "modern";
