@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/mc/:path*",
-      "destination": "https://6abb-76-164-203-135.ngrok-free.app/:path*"
+      "destination": "https://61e5-76-164-203-135.ngrok-free.app/:path*"
     }
   ]
 }
