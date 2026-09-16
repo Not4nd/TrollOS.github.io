@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/mc/:path*",
+      "destination": "https://ТВОЙ-NGROK.ngrok-free.app/:path*"
+    }
+  ]
+}
