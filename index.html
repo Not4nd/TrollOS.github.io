@@ -1,0 +1,2624 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title data-id="th-modified" id="page-title">TROLL_OS // USER EDITION</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Jura:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- КИБЕРПАНК ФОН И БАЗА --- */
+        body {
+            margin: 0; padding: 20px; font-family: 'Jura', sans-serif;
+            background-color: #020504; color: #fff;
+            min-height: 100vh; overflow-x: hidden;
+            /* Кастомный курсор-прицел */
+            cursor: crosshair;
+        }
+
+        /* Кастомный скроллбар */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #020504; border-left: 1px solid rgba(0,255,170,0.2); }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 255, 170, 0.4); border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: #0fa; }
+
+        /* Холст для Матрицы */
+        #matrix-canvas {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1; opacity: 0.4; pointer-events: none;
+        }
+
+        body::after {
+            content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px; z-index: 9000; pointer-events: none;
+        }
+
+        /* --- ВЕРХНЯЯ ПАНЕЛЬ И АВТОР --- */
+        .top-bar {
+            max-width: 1300px; margin: 0 auto 30px auto; display: flex; justify-content: space-between;
+            align-items: center; border-bottom: 1px solid rgba(0,255,170,0.3); padding-bottom: 15px;
+            position: relative; z-index: 10;
+        }
+        
+        .sys-title { font-family: 'Orbitron', sans-serif; font-size: 2.2rem; color: #0fa; text-shadow: 0 0 10px rgba(0,255,170,0.6); margin: 0; letter-spacing: 3px;}
+        .cursor { display: inline-block; width: 12px; height: 24px; background: #0fa; animation: blink 1s infinite; vertical-align: bottom; margin-left: 5px;}
+
+        /* Глитч-эффект для текста */
+        .glitch { position: relative; display: inline-block; }
+        .glitch::before, .glitch::after {
+            content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #020504;
+        }
+        .glitch::before { left: 2px; text-shadow: -2px 0 #ff00c1; clip: rect(44px, 450px, 56px, 0); animation: glitch-anim 5s infinite linear alternate-reverse; }
+        .glitch::after { left: -2px; text-shadow: -2px 0 #00fff9, 2px 2px #ff00c1; animation: glitch-anim2 5s infinite linear alternate-reverse; }
+
+        .author-tag { font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px;}
+        .author-name { color: #ff0055; font-weight: bold; text-shadow: 0 0 10px #ff0055; }
+
+        .sys-status { display: flex; align-items: center; gap: 20px; font-family: 'Orbitron', sans-serif; font-size: 0.85rem;}
+        .status-indicator { display: flex; align-items: center; gap: 8px; color: #0fa; }
+        .dot { width: 10px; height: 10px; background: #0fa; border-radius: 50%; box-shadow: 0 0 10px #0fa; animation: pulse 2s infinite; }
+        .version-selector { background: rgba(0,20,10,0.8); border: 1px solid #0fa; padding: 5px 10px; border-radius: 4px; color: #0fa; cursor: pointer; font-family: 'Orbitron', sans-serif; outline: none;}
+
+        /* --- СЕТКА КАРТОЧЕК --- */
+        .dashboard { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); 
+            gap: 25px; 
+            max-width: 1300px; 
+            margin: 0 auto; 
+            position: relative; 
+            z-index: 10;
+        }
+        .card { min-width: 0; }
+        .troll-card { grid-column: 1 / -1 !important; }
+        
+        .card { 
+            background: rgba(3, 10, 7, 0.8); backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 255, 170, 0.15); border-top: 2px solid #0fa;
+            border-radius: 4px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            animation: fadeInUp 0.6s ease forwards; opacity: 0; transform: translateY(20px); position: relative; 
+            box-sizing: border-box;
+        }
+        
+        .card::before { content: ''; position: absolute; top: 0; right: 0; width: 20px; height: 2px; background: #0fa; }
+        .card::after { content: ''; position: absolute; bottom: 0; left: 0; width: 20px; height: 2px; background: #0fa; }
+
+        .card:nth-child(1) { animation-delay: 0.1s; }
+        .card:nth-child(2) { animation-delay: 0.2s; }
+        .card:nth-child(3) { animation-delay: 0.3s; }
+        .card:nth-child(4) { animation-delay: 0.4s; }
+        .card:nth-child(5) { animation-delay: 0.5s; }
+
+        .card h2 { 
+            margin-top: 0; font-family: 'Orbitron', sans-serif; font-size: 1.2rem; text-transform: uppercase;
+            color: #fff; text-shadow: 0 0 5px rgba(0,255,170,0.5); border-bottom: 1px solid rgba(0, 255, 170, 0.2); 
+            padding-bottom: 10px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+        }
+        .card h2::before { content: '>'; color: #0fa; font-weight: bold; }
+
+        /* --- ЭЛЕМЕНТЫ УПРАВЛЕНИЯ --- */
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
+        .form-group { flex: 1; margin-bottom: 15px; position: relative;}
+        label { display: block; margin-bottom: 8px; font-size: 0.8rem; color: #0fa; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;}
+        
+        select, input[type="text"], input[type="number"] {
+            width: 100%; padding: 10px 12px; background: rgba(0,0,0,0.6); border: 1px solid rgba(0, 255, 170, 0.2); 
+            color: #fff; font-family: 'Jura', sans-serif; font-size: 1rem; font-weight: 600;
+            border-radius: 2px; box-sizing: border-box; outline: none; transition: 0.3s;
+        }
+        select:hover, input:hover { border-color: rgba(0,255,170,0.5); }
+        select:focus, input:focus { border-color: #0fa; box-shadow: inset 0 0 10px rgba(0, 255, 170, 0.1); background: rgba(0, 15, 10, 0.8);}
+        optgroup { background: #05100a; color: #0fa; font-style: normal; font-weight: bold; }
+        option { background: #020504; color: #fff; font-weight: normal; }
+
+        .checkbox-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; padding: 12px; background: rgba(0,0,0,0.4); border-left: 2px solid #0fa;}
+        .checkbox-label { display: flex; align-items: center; gap: 12px; font-size: 0.9rem; cursor: pointer; color: #ccc; transition: 0.2s;}
+        .checkbox-label:hover { color: #fff; }
+        input[type="checkbox"] { appearance: none; width: 18px; height: 18px; border: 1px solid #0fa; background: rgba(0,0,0,0.6); cursor: pointer; position: relative;}
+        input[type="checkbox"]:checked { background: rgba(0, 255, 170, 0.3); }
+        input[type="checkbox"]:checked::after { content: '✔'; position: absolute; color: #0fa; font-size: 14px; top: -1px; left: 2px; font-weight: bold;}
+
+        /* --- КНОПКИ --- */
+        .btn {
+            width: 100%; padding: 12px; background: rgba(0, 255, 170, 0.05); border: 1px solid rgba(0, 255, 170, 0.3); color: #0fa; 
+            font-family: 'Orbitron', sans-serif; font-size: 0.85rem; font-weight: bold; cursor: pointer; transition: all 0.2s ease; 
+            text-transform: uppercase; letter-spacing: 1px; position: relative; 
+        }
+        
+        .btn:hover { background: rgba(0, 255, 170, 0.15); border-color: #0fa; box-shadow: 0 0 15px rgba(0, 255, 170, 0.3), inset 0 0 10px rgba(0,255,170,0.1); text-shadow: 0 0 5px #0fa;}
+        .btn:active { transform: scale(0.98); }
+        
+        .btn.danger { border-color: rgba(255, 50, 50, 0.4); color: #ff4444; background: rgba(255, 50, 50, 0.05); }
+        .btn.danger:hover { background: rgba(255, 50, 50, 0.15); border-color: #ff4444; box-shadow: 0 0 15px rgba(255, 50, 50, 0.4), inset 0 0 10px rgba(255,50,50,0.1); text-shadow: 0 0 5px #ff4444; }
+        .btn.warn { border-color: rgba(255, 170, 0, 0.4); color: #ffaa00; }
+        .btn.warn:hover { background: rgba(255, 170, 0, 0.15); border-color: #ffaa00; box-shadow: 0 0 15px rgba(255, 170, 0, 0.4), inset 0 0 10px rgba(255,170,0,0.1); text-shadow: 0 0 5px #ffaa00; }
+
+        .troll-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 25px;}
+        h3.category { font-family: 'Orbitron', sans-serif; font-size: 0.8rem; color: #777; border-bottom: 1px dashed #333; padding-bottom: 5px; margin-top: 0; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 2px;}
+
+        .panel-hint {
+            margin: -8px 0 18px; padding: 10px 12px; border-left: 2px solid #0fa;
+            background: rgba(0,255,170,0.035); color: #8cc; font-size: 0.78rem;
+            letter-spacing: 0.4px; line-height: 1.45;
+        }
+
+        /* --- ТУЛТИПЫ --- */
+        [data-tooltip] { position: relative; cursor: help; }
+        [data-tooltip]::before { 
+            content: attr(data-tooltip); position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%) translateY(10px); 
+            opacity: 0; visibility: hidden; background: rgba(0, 5, 2, 0.98); color: #fff; padding: 10px 15px; 
+            border: 1px solid #0fa; border-radius: 4px; font-size: 0.85rem; font-family: 'Jura', sans-serif; 
+            white-space: normal; width: max-content; max-width: 250px; text-align: center; font-weight: bold;
+            transition: all 0.2s ease; z-index: 99999; box-shadow: 0 5px 20px rgba(0,255,170,0.3); pointer-events: none;
+        }
+        [data-tooltip]::after { 
+            content: ''; position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%) translateY(16px); 
+            opacity: 0; visibility: hidden; border-width: 6px; border-style: solid; border-color: #0fa transparent transparent transparent; 
+            transition: all 0.2s ease; z-index: 99999; pointer-events: none;
+        }
+        [data-tooltip]:hover::before, [data-tooltip]:hover::after { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+
+        /* --- УВЕДОМЛЕНИЯ --- */
+        #toast-container { position: fixed; bottom: 30px; right: 30px; display: flex; flex-direction: column; gap: 15px; z-index: 999999;}
+        .toast { 
+            background: rgba(5,20,10,0.95); border: 1px solid #0fa; border-left: 4px solid #0fa; 
+            color: #fff; padding: 15px 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.8); font-weight: bold; 
+            animation: slideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, fadeOut 0.5s 3.5s forwards; 
+            display: flex; align-items: center; gap: 10px; font-family: 'Jura', sans-serif;
+        }
+        .toast.error { border-color: #ff4444; border-left-color: #ff4444; }
+        .toast.easter-egg { border-color: #ff0055; border-left-color: #ff0055; color: #ff0055; box-shadow: 0 0 30px rgba(255,0,85,0.5); text-shadow: 0 0 5px #ff0055; font-size: 1.2rem;}
+
+        /* --- СТАТИСТИКА СИСТЕМЫ --- */
+        .stats-card{grid-column:1 / -1;}
+        .stats-subline{display:flex;justify-content:space-between;align-items:center;gap:14px;margin:-8px 0 18px;color:#777;font-size:.78rem;letter-spacing:1px;text-transform:uppercase}
+        .stats-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+        .stat-box{background:rgba(0,0,0,.38);border:1px solid rgba(0,255,170,.12);padding:13px 14px;min-height:74px;position:relative;overflow:hidden}
+        .stat-box::after{content:"";position:absolute;inset:auto 0 0 0;height:1px;background:linear-gradient(90deg,transparent,#00ffaa,transparent);opacity:.35}
+        .stat-label{font-size:.68rem;color:#6f8a7f;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:7px}
+        .stat-value{font-family:'Orbitron',sans-serif;font-size:1.05rem;color:#fff;text-shadow:0 0 8px rgba(0,255,170,.18);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .stat-value.good{color:#0fa}.stat-value.warn{color:#ffaa00}.stat-value.danger{color:#ff4c4c}.stat-value.dim{color:#77817c}
+        .stats-events{margin-top:14px;padding:12px 14px;background:rgba(0,0,0,.30);border-left:2px solid #0fa;min-height:48px}
+        .events-header{display:flex;justify-content:space-between;gap:10px;align-items:center;color:#0fa;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px}
+        .events-list{display:flex;flex-wrap:wrap;gap:7px}
+        .event-chip{display:inline-flex;align-items:center;gap:7px;padding:6px 9px;border:1px solid rgba(0,255,170,.18);background:rgba(0,255,170,.03);font-size:.72rem;color:#cfe9e0}
+        .event-chip .evt-time{color:#0fa;font-family:'Orbitron',sans-serif;font-size:.66rem}
+        .event-chip.warn{border-color:rgba(255,170,0,.25);color:#ffe4ac}.event-chip.warn .evt-time{color:#ffaa00}
+        .event-chip.danger{border-color:rgba(255,68,68,.28);color:#ffd0d0}.event-chip.danger .evt-time{color:#ff4c4c}
+        .no-events{color:#51615a;font-size:.75rem}
+        .online-pulse{display:inline-block;width:8px;height:8px;border-radius:50%;background:#0fa;box-shadow:0 0 10px #0fa;animation:pulse 1.8s infinite;margin-right:7px}
+        .offline-pulse{display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff4444;box-shadow:0 0 8px #ff4444;margin-right:7px}
+        @media(max-width:900px){.stats-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+        @media(max-width:560px){.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.stats-subline{align-items:flex-start;flex-direction:column;gap:5px}}
+
+        /* --- СИСТЕМА РАНГОВ --- */
+        .rank-console{background:rgba(0,0,0,.28);border:1px solid rgba(0,255,170,.14);padding:12px}
+        .rank-headline{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+        .rank-current{font:700 14px 'Orbitron',sans-serif;color:#0fa;text-shadow:0 0 10px rgba(0,255,170,.35);letter-spacing:1.2px}
+        .rank-progress-text{font:10px 'Jura',sans-serif;color:#777;text-transform:uppercase;letter-spacing:1px}
+        .rank-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+        .rank-item{border:1px solid rgba(0,255,170,.12);background:rgba(0,0,0,.22);padding:12px;position:relative}
+        .rank-item.locked{opacity:.58}
+        .rank-item.unlocked{border-color:rgba(0,255,170,.35);box-shadow:inset 0 0 18px rgba(0,255,170,.035)}
+        .rank-item.current{border-color:#ffaa00;box-shadow:0 0 14px rgba(255,170,0,.10)}
+        .rank-top{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:7px}
+        .rank-name{font:700 11px 'Orbitron',sans-serif;letter-spacing:1px;color:#fff}
+        .rank-status{font:700 9px 'Orbitron',sans-serif;letter-spacing:1px;color:#777}
+        .rank-status.ok{color:#0fa}.rank-status.cur{color:#ffaa00}.rank-status.lock{color:#ff4c4c}
+        .rank-effect{font-size:11px;color:#9fc0b3;line-height:1.45;margin-bottom:8px}
+        .rank-condition{font-size:10px;color:#687b74;line-height:1.45}
+        .rank-condition strong{color:#dff}
+        .rank-use{margin-top:10px}
+        .rank-use .btn{min-height:36px;padding:9px 10px;font-size:10px}
+        @media(max-width:650px){.rank-grid{grid-template-columns:1fr}}
+
+        /* --- ИДЕНТИФИКАЦИЯ ПОЛЬЗОВАТЕЛЯ --- */
+        .identity-chip{
+            margin-left:auto;
+            border:1px solid rgba(255,0,85,.24);
+            color:#ff6d94;
+            background:rgba(255,0,85,.035);
+            padding:7px 10px;
+            font:700 10px 'Orbitron',sans-serif;
+            letter-spacing:.8px;
+            cursor:pointer;
+            transition:.18s ease;
+        }
+        .identity-chip:hover{border-color:#ff0055;box-shadow:0 0 14px rgba(255,0,85,.18);transform:translateY(-1px)}
+        .identity-subtle{color:#777;font-size:.75rem;line-height:1.45}
+        .identity-console{
+            background:rgba(0,0,0,.76);
+            border:1px solid rgba(255,0,85,.28);
+            padding:16px;
+            box-shadow:inset 0 0 26px rgba(255,0,85,.035);
+            font-family:'Jura',sans-serif;
+        }
+        .identity-console .console-line{color:#ff5f86;font:700 .78rem 'Orbitron',sans-serif;letter-spacing:1px;margin-bottom:10px}
+        .identity-console .prompt{color:#777}
+        .identity-console input{
+            width:100%;box-sizing:border-box;margin:12px 0;
+            padding:13px 14px;background:#010302;border:1px solid rgba(255,0,85,.25);
+            color:#fff;outline:none;font-family:'Jura',sans-serif;font-size:1rem
+        }
+        .identity-console input:focus{border-color:#ff0055;box-shadow:0 0 14px rgba(255,0,85,.12)}
+        .identity-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+        .identity-meta div{padding:9px 10px;border:1px solid rgba(0,255,170,.10);background:rgba(0,0,0,.24)}
+        .identity-meta span{display:block;color:#687d74;font-size:.65rem;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px}
+        .identity-meta strong{font:700 .8rem 'Orbitron',sans-serif;color:#dffff3}
+        .identity-note{margin-top:10px;color:#71837c;font-size:.75rem}
+        @media(max-width:560px){.identity-chip{margin-left:0}.identity-meta{grid-template-columns:1fr}}
+
+        /* --- ЗАЩИЩЁННЫЙ КОНТУР HEAT --- */
+        .heat-lock-btn {
+            position: relative;
+            border-color: rgba(255, 170, 0, 0.38) !important;
+            color: #ffaa00 !important;
+            background: rgba(255, 170, 0, 0.035) !important;
+        }
+        .heat-lock-btn:hover {
+            border-color: #ffaa00 !important;
+            box-shadow: 0 0 16px rgba(255,170,0,0.22), inset 0 0 10px rgba(255,170,0,0.08) !important;
+        }
+        .heat-lock-btn.unlocked {
+            border-color: rgba(0,255,170,0.45) !important;
+            color: #0fa !important;
+            background: rgba(0,255,170,0.04) !important;
+        }
+        .heat-console {
+            background: rgba(0,0,0,0.72);
+            border: 1px solid rgba(0,255,170,0.30);
+            box-shadow: inset 0 0 24px rgba(0,255,170,0.05);
+            padding: 16px;
+            font-family: 'Jura', sans-serif;
+        }
+        .heat-console .console-line {
+            color: #0fa;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.78rem;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        .heat-console .prompt { color:#777; }
+        .heat-console input {
+            margin: 10px 0 12px;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px 14px;
+            background: rgba(0,0,0,0.72);
+            border: 1px solid rgba(0,255,170,0.30);
+            color: #fff;
+            outline: none;
+            font-family: 'Jura', sans-serif;
+        }
+        .heat-console input:focus {
+            border-color:#0fa;
+            box-shadow: 0 0 12px rgba(0,255,170,0.15);
+        }
+        .heat-console .console-status {
+            min-height: 20px;
+            margin-top: 8px;
+            color:#777;
+            font-size:0.85rem;
+        }
+        .heat-console .console-status.error { color:#ff4444; }
+        .heat-console .console-status.success { color:#0fa; }
+
+        /* --- КОНТУР ДЕСТРУКТИВНЫХ КОМАНД --- */
+        .purge-gate{
+            margin: 12px 0 14px;
+            padding: 13px 14px;
+            border: 1px solid rgba(255,68,68,.20);
+            background: linear-gradient(90deg, rgba(255,68,68,.035), rgba(0,0,0,.18));
+            box-shadow: inset 0 0 18px rgba(255,68,68,.02);
+        }
+        .purge-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:9px}
+        .purge-title{font:700 .74rem 'Orbitron',sans-serif;letter-spacing:1.2px;color:#ff6868}
+        .purge-progress{font:700 .7rem 'Orbitron',sans-serif;color:#aaa}
+        .purge-bar{height:5px;background:#100707;border:1px solid rgba(255,68,68,.12);overflow:hidden;margin-bottom:10px}
+        .purge-bar>span{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff4444,#ff8b5c);box-shadow:0 0 10px rgba(255,68,68,.28);transition:width .25s}
+        .purge-tasks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+        .purge-task{display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid rgba(255,255,255,.05);background:rgba(0,0,0,.18);font-size:.72rem;color:#8c9d96}
+        .purge-task .check{width:16px;height:16px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.15);color:#666;font-weight:700;flex:0 0 auto}
+        .purge-task.done{border-color:rgba(0,255,170,.14);color:#bfffe9}
+        .purge-task.done .check{border-color:#0fa;background:rgba(0,255,170,.08);color:#0fa;box-shadow:0 0 8px rgba(0,255,170,.12)}
+        .purge-task small{display:block;color:#66736e;font-size:.64rem;margin-top:2px}
+        .purge-unlocked{color:#0fa !important;border-color:rgba(0,255,170,.35) !important;background:rgba(0,255,170,.04) !important}
+        @media(max-width:760px){.purge-tasks{grid-template-columns:1fr}}
+
+        /* Анимации */
+        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateX(50px); } }
+        @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0, 255, 170, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(0, 255, 170, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 255, 170, 0); } }
+        @keyframes glitch-anim {
+            0% { clip: rect(24px, 9999px, 71px, 0); }
+            20% { clip: rect(85px, 9999px, 86px, 0); }
+            40% { clip: rect(11px, 9999px, 25px, 0); }
+            60% { clip: rect(65px, 9999px, 49px, 0); }
+            80% { clip: rect(14px, 9999px, 92px, 0); }
+            100% { clip: rect(5px, 9999px, 3px, 0); }
+        }
+        @keyframes glitch-anim2 {
+            0% { clip: rect(65px, 9999px, 100px, 0); }
+            20% { clip: rect(3px, 9999px, 14px, 0); }
+            40% { clip: rect(82px, 9999px, 5px, 0); }
+            60% { clip: rect(22px, 9999px, 71px, 0); }
+            80% { clip: rect(44px, 9999px, 45px, 0); }
+            100% { clip: rect(93px, 9999px, 21px, 0); }
+        }
+
+
+        /* =========================================================
+           TROLL_OS // INTERACTIVE UPGRADE PACK
+           ========================================================= */
+
+        .ops-panel {
+            max-width: 1300px;
+            margin: 0 auto 25px auto;
+            display: grid;
+            grid-template-columns: 1.35fr 1fr 1fr;
+            gap: 15px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .ops-module {
+            background: rgba(2,10,6,0.78);
+            border: 1px solid rgba(0,255,170,0.15);
+            border-top: 1px solid rgba(0,255,170,0.55);
+            padding: 14px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.45), inset 0 0 25px rgba(0,255,170,0.025);
+            backdrop-filter: blur(10px);
+        }
+
+        .ops-head {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:10px;
+            margin-bottom:12px;
+            font-family:'Orbitron',sans-serif;
+            font-size:.72rem;
+            letter-spacing:1.5px;
+            color:#0fa;
+            text-transform:uppercase;
+        }
+
+        .ops-head .mini-value {
+            color:#fff;
+            font-size:.72rem;
+            opacity:.8;
+        }
+
+        .ops-actions {
+            display:grid;
+            grid-template-columns:repeat(2,minmax(0,1fr));
+            gap:8px;
+        }
+
+        .ops-actions .btn { margin:0; }
+
+        .ops-mini {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:10px;
+            padding:8px 10px;
+            border:1px solid rgba(0,255,170,.12);
+            background:rgba(0,0,0,.22);
+            margin-bottom:8px;
+            font-family:'Jura',sans-serif;
+            font-size:.8rem;
+        }
+
+        .ops-mini:last-child{margin-bottom:0}
+
+        .toggle-pill {
+            cursor:pointer;
+            display:inline-flex;
+            align-items:center;
+            gap:7px;
+            padding:5px 9px;
+            border:1px solid rgba(0,255,170,.25);
+            color:#777;
+            user-select:none;
+        }
+
+        .toggle-pill.on {
+            color:#0fa;
+            border-color:#0fa;
+            box-shadow:0 0 10px rgba(0,255,170,.12);
+        }
+
+        .pulse-ring {
+            width:7px;height:7px;border-radius:50%;
+            background:#0fa;box-shadow:0 0 8px #0fa;
+            animation:pulse 1.6s infinite;
+            flex:0 0 auto;
+        }
+
+        #event-log {
+            height: 72px;
+            overflow:auto;
+            font: 11px/1.55 monospace;
+            color:#7dd9bf;
+            opacity:.8;
+            background:rgba(0,0,0,.28);
+            border:1px solid rgba(0,255,170,.08);
+            padding:8px;
+        }
+
+        #event-log .log-line { white-space:nowrap; }
+        #event-log .log-line.error { color:#ff6868; }
+        #event-log .log-line.warn { color:#ffaa00; }
+        #event-log .log-line.good { color:#7dffca; }
+
+        .toolbar {
+            max-width:1300px;
+            margin:0 auto 20px;
+            display:flex;
+            align-items:center;
+            gap:8px;
+            flex-wrap:wrap;
+            position:relative;
+            z-index:10;
+        }
+
+        .tool-chip {
+            border:1px solid rgba(0,255,170,.18);
+            background:rgba(0,255,170,.03);
+            color:#0fa;
+            padding:7px 10px;
+            font:700 11px 'Orbitron',sans-serif;
+            letter-spacing:.7px;
+            cursor:pointer;
+            transition:.18s ease;
+        }
+
+        .tool-chip:hover{
+            border-color:#0fa;
+            background:rgba(0,255,170,.1);
+            box-shadow:0 0 12px rgba(0,255,170,.15);
+            transform:translateY(-1px);
+        }
+
+        .tool-chip.hot{color:#ff5b72;border-color:rgba(255,70,100,.28)}
+        .tool-chip.hot:hover{border-color:#ff5b72;box-shadow:0 0 12px rgba(255,70,100,.18)}
+
+        .shortcut-hint {
+            margin-left:auto;
+            font:10px 'Jura',sans-serif;
+            color:#666;
+        }
+
+        #fx-layer { position:fixed; inset:0; pointer-events:none; z-index:99990; overflow:hidden; }
+
+        .click-particle {
+            position:fixed;
+            width:4px;height:4px;
+            border-radius:50%;
+            background:#0fa;
+            box-shadow:0 0 10px #0fa;
+            animation:particleBurst .55s ease-out forwards;
+        }
+
+        .screen-flash{
+            position:fixed;inset:0;
+            background:rgba(0,255,170,.08);
+            pointer-events:none;
+            z-index:99989;
+            animation:screenFlash .18s ease-out forwards;
+        }
+
+        .screen-flash.red{background:rgba(255,40,70,.12)}
+        .screen-shake{animation:screenShake .22s linear}
+
+        .modal-backdrop{
+            position:fixed;inset:0;background:rgba(0,0,0,.72);
+            display:flex;align-items:center;justify-content:center;
+            z-index:100000;
+            opacity:0;pointer-events:none;
+            transition:.2s;
+            backdrop-filter:blur(5px);
+        }
+
+        .modal-backdrop.open{opacity:1;pointer-events:auto}
+        .modal-box{
+            width:min(760px,calc(100vw - 28px));
+            max-height:80vh;
+            overflow:auto;
+            background:rgba(3,10,7,.97);
+            border:1px solid #0fa;
+            box-shadow:0 0 40px rgba(0,255,170,.18),0 20px 70px rgba(0,0,0,.8);
+            padding:20px;
+            transform:translateY(15px) scale(.98);
+            transition:.2s;
+        }
+        .modal-backdrop.open .modal-box{transform:none}
+
+        .modal-title{
+            font:700 18px 'Orbitron',sans-serif;
+            color:#0fa;
+            letter-spacing:2px;
+            margin-bottom:12px;
+        }
+
+        .command-preview{
+            font:12px/1.6 monospace;
+            padding:12px;
+            background:#010302;
+            border:1px dashed rgba(0,255,170,.22);
+            color:#a8ffe4;
+            white-space:pre-wrap;
+            word-break:break-word;
+            margin:10px 0 15px;
+        }
+
+        .roulette{
+            position:relative;
+            height:62px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            border:1px dashed rgba(0,255,170,.18);
+            background:rgba(0,0,0,.25);
+            font:700 16px 'Orbitron',sans-serif;
+            color:#fff;
+            overflow:hidden;
+        }
+
+        .roulette.glitching{animation:rouletteGlitch .08s infinite}
+        .roulette .winner{color:#0fa;text-shadow:0 0 12px #0fa}
+
+        .meter-wrap{margin-top:8px}
+        .meter-label{
+            display:flex;justify-content:space-between;
+            font:10px 'Jura',sans-serif;color:#777;margin-bottom:5px;
+        }
+        .meter{
+            height:6px;background:#06100b;border:1px solid rgba(0,255,170,.1);overflow:hidden;
+        }
+        .meter > span{
+            display:block;height:100%;width:68%;
+            background:linear-gradient(90deg,#0fa,#17ffd3,#0fa);
+            box-shadow:0 0 12px rgba(0,255,170,.45);
+            animation:meterPulse 2.2s ease-in-out infinite;
+        }
+
+        @keyframes particleBurst{
+            from{transform:translate(0,0) scale(1);opacity:1}
+            to{transform:translate(var(--dx),var(--dy)) scale(0);opacity:0}
+        }
+        @keyframes screenFlash{from{opacity:1}to{opacity:0}}
+        @keyframes screenShake{
+            0%,100%{transform:translate(0)}
+            20%{transform:translate(-4px,2px)}
+            40%{transform:translate(3px,-2px)}
+            60%{transform:translate(-2px,-1px)}
+            80%{transform:translate(2px,2px)}
+        }
+        @keyframes rouletteGlitch{
+            0%{transform:translateX(-1px);text-shadow:2px 0 #ff0055}
+            50%{transform:translateX(1px);text-shadow:-2px 0 #00fff9}
+            100%{transform:translateX(0);text-shadow:none}
+        }
+        @keyframes meterPulse{0%,100%{opacity:.72}50%{opacity:1}}
+
+
+        /* --- НОВЫЕ МЕХАНИКИ / HUD --- */
+        .lab-card{
+            max-width: 1300px;
+            margin: 0 auto 25px auto;
+            box-sizing: border-box;
+            background:rgba(3,10,7,.88);backdrop-filter:blur(10px);
+            border:1px solid rgba(0,255,170,.18);border-top:2px solid #ff0055;
+            border-radius:4px;padding:22px;position:relative;
+            box-shadow:0 15px 45px rgba(0,0,0,.7), inset 0 0 35px rgba(0,255,170,.025);
+        }
+        .lab-card:before,.lab-card:after{content:"";position:absolute;width:36px;height:2px;background:#ff0055}
+        .lab-card:before{top:0;right:0}.lab-card:after{bottom:0;left:0}
+        .lab-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+        .lab-module{border:1px solid rgba(0,255,170,.11);background:rgba(0,0,0,.25);padding:14px}
+        .lab-module h3{margin:0 0 8px;font:700 12px 'Orbitron',sans-serif;letter-spacing:1.5px;color:#0fa}
+        .lab-module p{margin:0 0 10px;color:#7d978c;font-size:11px;line-height:1.45}
+        .lab-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+        .lab-btn{min-height:40px;font-size:10px}
+        .heat-state{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:1.4px;text-shadow:0 0 8px currentColor}.heat-state.normal{color:#0fa}.heat-state.alert{color:#ffaa00}.heat-state.lock{color:#ff6a00}.heat-state.critical{color:#ff304f}.heat-state.blackout{color:#ff0055}.heat-wrap{margin-top:10px}
+        .heat-label{display:flex;justify-content:space-between;font:10px 'Jura',sans-serif;color:#888;margin-bottom:5px}
+        .heat-bar{height:7px;background:#090f0c;border:1px solid rgba(255,170,0,.18);overflow:hidden}
+        .heat-bar>span{display:block;height:100%;width:0;background:linear-gradient(90deg,#0fa,#ffaa00,#ff304f);box-shadow:0 0 12px rgba(255,80,60,.35);transition:width .25s}
+        .timer-box{display:none;align-items:center;justify-content:space-between;gap:12px;margin-top:10px;padding:9px;border:1px solid rgba(255,0,85,.25);background:rgba(255,0,85,.035)}
+        .timer-box.active{display:flex}
+        .timer-value{font:700 18px 'Orbitron',sans-serif;color:#ff5478;text-shadow:0 0 10px rgba(255,0,85,.45)}
+        .secret-orb{width:10px;height:10px;border-radius:50%;background:#ff0055;box-shadow:0 0 15px #ff0055;display:inline-block;margin-right:6px;animation:pulse 1.6s infinite}
+        .lab-badge{font:700 9px 'Orbitron',sans-serif;color:#8ea39a;border:1px solid rgba(142,163,154,.18);padding:3px 6px;letter-spacing:1px}
+        @media(max-width:1000px){.lab-grid{grid-template-columns:1fr 1fr}}
+        @media(max-width:760px){.lab-grid{grid-template-columns:1fr}.lab-row{grid-template-columns:1fr}.lab-card{padding:16px}}
+
+        @media(max-width:760px){
+            body{padding:12px;}
+            .top-bar{margin-bottom:18px;align-items:flex-start;gap:12px;}
+            .sys-title{font-size:1.55rem;letter-spacing:2px;}
+            .cursor{width:8px;height:18px;}
+            .author-tag{font-size:.72rem;}
+            .sys-status{gap:8px;flex-direction:column;align-items:flex-end;font-size:.65rem;}
+            .version-selector{max-width:180px;font-size:.65rem;padding:5px 7px;}
+            .toolbar{gap:6px;}
+            .shortcut-hint{font-size:9px;}
+            .dashboard{grid-template-columns:1fr !important;gap:16px;}
+            .card,.troll-card{grid-column:1 / -1 !important;padding:16px;}
+            .troll-grid{grid-template-columns:1fr;gap:9px;}
+            .troll-grid .btn{min-height:42px;}
+            .form-row{gap:9px;flex-wrap:wrap;}
+            .form-row>.form-group{min-width:0;}
+            .ops-panel{grid-template-columns:1fr;}
+            .modal-box{width:calc(100vw - 24px);padding:15px;}
+        }
+
+        @media(max-width:1000px){
+            .ops-panel{grid-template-columns:1fr}
+            .shortcut-hint{width:100%;margin-left:0}
+        }
+
+        @media(max-width:640px){
+            .ops-actions{grid-template-columns:1fr}
+            .toolbar{margin-bottom:14px}
+            .tool-chip{font-size:9px}
+        }
+
+
+/* --- CUSTOM TOTEM LAB --- */
+.totem-lab{display:none !important;max-width:1300px;margin:0 auto 25px;background:rgba(3,10,7,.88);border:1px solid rgba(0,255,170,.18);border-top:2px solid #ff0055;border-radius:4px;padding:22px;position:relative;box-shadow:0 15px 45px rgba(0,0,0,.7),inset 0 0 35px rgba(0,255,170,.025);z-index:10;box-sizing:border-box}
+.totem-grid{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:14px;align-items:stretch}
+.totem-module{border:1px solid rgba(0,255,170,.11);background:rgba(0,0,0,.24);padding:14px;min-width:0}
+.totem-module h3{margin:0 0 8px;font:700 12px 'Orbitron',sans-serif;letter-spacing:1.4px;color:#0fa}
+.totem-module p{margin:0 0 10px;color:#7d978c;font-size:11px;line-height:1.45}
+.totem-upload{border:1px dashed rgba(0,255,170,.28);min-height:210px;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:14px;cursor:pointer;transition:.2s;background:rgba(0,255,170,.02)}
+.totem-upload:hover,.totem-upload.drag{border-color:#0fa;background:rgba(0,255,170,.06);box-shadow:inset 0 0 25px rgba(0,255,170,.04)}
+.totem-preview{max-width:160px;max-height:160px;image-rendering:auto;display:none;margin-bottom:10px;border:1px solid rgba(255,255,255,.08);box-shadow:0 0 24px rgba(0,255,170,.1)}
+.totem-placeholder{color:#6d8179;font:700 11px 'Orbitron',sans-serif;letter-spacing:1px}
+.totem-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.totem-stat{padding:8px;border:1px solid rgba(0,255,170,.08);background:rgba(0,0,0,.2)}
+.totem-stat span{display:block;color:#687d74;font-size:9px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}.totem-stat strong{font:700 11px 'Orbitron',sans-serif;color:#dffff3}
+.totem-field{margin-bottom:10px}.totem-field label{font-size:10px}.totem-field input,.totem-field select{margin-top:6px}
+.totem-command{font:11px/1.5 monospace;color:#a8ffe4;background:#010302;border:1px dashed rgba(0,255,170,.22);padding:10px;white-space:pre-wrap;word-break:break-all;min-height:58px}
+.totem-status{min-height:20px;font-size:10px;color:#6f827a;margin-top:8px}.totem-status.good{color:#0fa}.totem-status.bad{color:#ff4c4c}
+@media(max-width:1000px){.totem-grid{grid-template-columns:1fr 1fr}.totem-module:first-child{grid-column:1 / -1}}
+@media(max-width:760px){.totem-grid{grid-template-columns:1fr}.totem-module:first-child{grid-column:auto}.totem-lab{padding:16px}}
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+
+    <!-- Канвас для эффекта матрицы -->
+    <canvas id="matrix-canvas"></canvas>
+
+    <div class="top-bar">
+        <div>
+            <h1 class="sys-title glitch" data-text="TROLL_OS">TROLL_OS <span class="cursor"></span></h1>
+            <div class="author-tag">SysAdmin: <span class="author-name glitch" id="author-name" data-text="USER">USER</span></div>
+        </div>
+        <div class="sys-status">
+            <select id="mc-version" class="version-selector" data-tooltip="Выбери свою версию игры для правильной компиляции команд!">
+                <option value="modern">Minecraft 1.20.5 и выше</option>
+                <option value="old">Minecraft 1.20.4 и ниже</option>
+            </select>
+            <div class="status-indicator">
+                <div class="dot"></div>
+                SYSTEM ONLINE
+            </div>
+        </div>
+    </div>
+
+    <div class="toolbar">
+        <button class="tool-chip" id="btn-rng">🎲 TROLL RNG</button>
+        <button class="tool-chip" id="btn-last">↩ ПОВТОРИТЬ ПОСЛЕДНЕЕ</button>
+        <button class="tool-chip" id="btn-log">▣ ЛОГ СОБЫТИЙ</button>
+        <button class="tool-chip" id="btn-help">⌨ ГОРЯЧИЕ КЛАВИШИ</button>
+        <button class="tool-chip" id="btn-ranks">🏆 РАНГИ</button>
+        <button class="tool-chip" id="btn-dev-assets">🧪 В РАЗРАБОТКЕ</button>
+        <button class="tool-chip hot" id="btn-exe">⚡ EXE PROTOCOL</button>
+        <button class="identity-chip" id="btn-identity" title="Открыть консоль профиля">USER // <span id="toolbar-user-name">USER</span></button>
+        <span class="shortcut-hint">R — хаос • E — EXE • L — лог • ? — помощь</span>
+    </div>
+
+    <div class="ops-panel">
+        <div class="ops-module">
+            <div class="ops-head">
+                <span>ОПЕРАТИВНЫЙ ЦЕНТР</span>
+                <span class="mini-value"><span class="pulse-ring"></span> LIVE</span>
+            </div>
+            <div class="ops-actions">
+                <button class="btn" id="btn-heal" data-tooltip="Полностью лечит всех игроков и снимает негативные эффекты">♥ АВТОЛЕЧЕНИЕ</button>
+                <button class="btn warn" id="btn-rain" data-tooltip="Кинет пачку полезных и бесполезных предметов">🎁 ЛУТ-ДОЖДЬ</button>
+                <button class="btn" id="btn-nightmare" data-tooltip="Небольшая цепочка из случайных неприятностей">☠ МИНИ-КОШМАР</button>
+                <button class="btn danger" id="btn-nuke" data-tooltip="Серия безопасных по серверу визуальных троллов. Не удаляет мир">💥 КАРУСЕЛЬ ХАОСА</button>
+            </div>
+        </div>
+
+        <div class="ops-module">
+            <div class="ops-head">
+                <span>ПАРАМЕТРЫ СЕССИИ</span>
+                <span class="mini-value" id="session-time">00:00:00</span>
+            </div>
+            <div class="ops-mini">
+                <span>Режим безопасных кликов</span>
+                <span class="toggle-pill on" id="safe-toggle">ON</span>
+            </div>
+            <div class="ops-mini">
+                <span>Анимации интерфейса</span>
+                <span class="toggle-pill on" id="fx-toggle">ON</span>
+            </div>
+            <div class="meter-wrap">
+                <div class="meter-label"><span>TROLL POWER</span><span id="power-value">73%</span></div>
+                <div class="meter"><span id="power-bar"></span></div>
+            </div>
+        </div>
+
+        <div class="ops-module">
+            <div class="ops-head">
+                <span>ПОСЛЕДНИЕ СОБЫТИЯ</span>
+                <span class="mini-value" id="event-count">0</span>
+            </div>
+            <div id="event-log">
+                <div class="log-line good">[BOOT] TROLL_OS готов к работе.</div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="lab-card">
+        <h2>Лаборатория Хаоса <span class="lab-badge"><span class="secret-orb"></span>EXPERIMENTAL</span></h2>
+        <div class="lab-grid">
+            <div class="lab-module">
+                <h3>РУЛЕТКА АНОМАЛИЙ</h3>
+                <p>Крутит набор событий и запускает победителя. Некоторые результаты помогают, некоторые делают жизнь заметно хуже.</p>
+                <button class="btn lab-btn hot" id="btn-anomaly-wheel" data-tooltip="Запускает визуальную рулетку и случайное событие.">🎰 ЗАПУСТИТЬ РУЛЕТКУ</button>
+            </div>
+            <div class="lab-module">
+                <h3>ПОДАРОК / ПРОКЛЯТИЕ</h3>
+                <p>Система подбрасывает скрытый результат: полезный бонус, странный подарок или неприятную ловушку.</p>
+                <button class="btn lab-btn warn" id="btn-lucky-box" data-tooltip="Случайно выберет между наградой, приколом и троллингом.">🎁 ОТКРЫТЬ ЯЩИК</button>
+            </div>
+            <div class="lab-module">
+                <h3>ЗАМЕДЛЕННАЯ БОМБА</h3>
+                <p>После отсчёта срабатывает случайная аномалия. Есть время отменить.</p>
+                <button class="btn lab-btn danger" id="btn-timebomb" data-tooltip="Запускает 5-секундный отсчёт, после которого срабатывает эффект.">💣 ЗАПУСТИТЬ БОМБУ</button>
+                <div class="timer-box" id="timebomb-ui"><span>ANOMALY TIMER</span><span class="timer-value" id="timebomb-value">5</span><button class="btn" id="btn-timebomb-cancel" style="width:auto;padding:8px 10px">ОТМЕНА</button></div>
+            </div>
+            <div class="lab-module">
+                <h3>КОМБО-МАТРИЦА</h3>
+                <p>Выбирает несколько разных эффектов и запускает их как мини-программу с паузами.</p>
+                <div class="lab-row">
+                    <button class="btn lab-btn" id="btn-combo3" data-tooltip="Случайное комбо из трёх разных эффектов.">🧩 3-ФАЗЫ</button>
+                    <button class="btn lab-btn" id="btn-combo5" data-tooltip="Расширенное комбо из пяти фаз — больше хаоса, больше шума.">☠ 5-ФАЗ</button>
+                </div>
+            </div>
+            <div class="lab-module">
+                <h3>ФЕЙК-СИСТЕМА</h3>
+                <p>Показывает правдоподобные системные сообщения, не ломая мир.</p>
+                <div class="lab-row">
+                    <button class="btn lab-btn" id="btn-fake-crash" data-heat-ui="true" data-tooltip="Показывает фальшивый краш и перезапуск интерфейса.">💀 КРАШ.EXE</button>
+                    <button class="btn lab-btn" id="btn-fake-disconnect" data-heat-ui="true" data-tooltip="Имитирует потерю соединения и восстановление связи.">📡 DISCONNECT</button>
+                </div>
+            </div>
+            <div class="lab-module">
+                <h3>РЕЖИМ РОЗЫГРЫША</h3>
+                <p>Трюки для друзей: заставить их сомневаться, что вообще происходит с миром.</p>
+                <div class="lab-row">
+                    <button class="btn lab-btn" id="btn-doppel" data-tooltip="Создаёт ощущение слежки: title + частицы + странный звук.">👁 СЛЕЖКА</button>
+                    <button class="btn lab-btn" id="btn-false-alarm" data-tooltip="Фальшивая тревога: сирена, красный title и сообщение об отмене угрозы.">🚨 ТРЕВОГА</button>
+                </div>
+            </div>
+            <div class="lab-module">
+                <h3>HEAT / ОПАСНОСТЬ</h3>
+                <p>Система баланса: чем больше HEAT, тем серьёзнее ограничения. Это не даёт одному пользователю мгновенно уничтожить мир.</p>
+                <div class="heat-wrap">
+                    <div class="heat-label"><span>THREAT LEVEL</span><span id="heat-value">0%</span></div>
+                    <div class="heat-bar"><span id="heat-bar"></span></div>
+                    <div class="heat-label" style="margin-top:6px"><span id="heat-state">NORMAL</span><span id="heat-cooldown">SYSTEM READY</span></div>
+                </div>
+                <button class="btn lab-btn heat-lock-btn" id="btn-vent-heat" data-heat-ui="true" data-tooltip="🔒 Системная функция защищена. Для доступа требуется пароль в консоли TROLL_OS.">🔒 СБРОС HEAT • LOCKED</button>
+            </div>
+            <div class="lab-module">
+                <h3>ПАСХАЛКИ</h3>
+                <p>Попробуй секретные последовательности и клики по интерфейсу.</p>
+                <button class="btn lab-btn" id="btn-secret-hunt" data-heat-ui="true" data-tooltip="Показывает список намёков на пасхалки TROLL_OS.">🔐 SECRET HUNT</button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="totem-lab" id="custom-totem-lab">
+        <h2>Кастомный Тотем <span class="lab-badge"><span class="secret-orb"></span>CUSTOM ASSET</span></h2>
+        <div class="panel-hint">Загрузи PNG → TROLL_OS создаст ресурс-пак с уникальной моделью тотема и сгенерирует команду <code>/give</code>. Версия: Minecraft Java 26.2 • Resource Pack 88 • новый item model format.</div>
+        <div class="totem-grid">
+            <div class="totem-module">
+                <h3>ТЕКСТУРА</h3>
+                <div class="totem-upload" id="totem-drop">
+                    <img class="totem-preview" id="totem-preview" alt="preview">
+                    <div class="totem-placeholder" id="totem-placeholder">📁 КЛИК / DRAG & DROP PNG</div>
+                    <input type="file" id="totem-file" accept="image/png,image/jpeg,image/webp" hidden>
+                    <div class="totem-status" id="totem-file-status">Рекомендуется квадратная картинка 16×16, 32×32 или 64×64.</div>
+                </div>
+                <div class="totem-meta">
+                    <div class="totem-stat"><span>Формат</span><strong id="totem-size">—</strong></div>
+                    <div class="totem-stat"><span>Model ID</span><strong id="totem-model-label">10001</strong></div>
+                </div>
+            </div>
+            <div class="totem-module">
+                <h3>КОНФИГУРАЦИЯ</h3>
+                <div class="totem-field"><label>Имя предмета</label><input type="text" id="totem-name" placeholder="Напр: EXE TOTEM"></div>
+                <div class="totem-field"><label>Custom Model Data</label><input type="number" id="totem-model-id" min="1" max="2147483647" value="10001"></div>
+                <div class="totem-field"><label>Цель команды</label><select id="totem-target"><option value="@s">@s — себе</option><option value="@a">@a — всем игрокам</option><option value="@p">@p — ближайшему игроку</option></select></div>
+                <button class="btn" id="btn-totem-command">⚙ СГЕНЕРИРОВАТЬ</button>
+                <button class="btn warn" id="btn-totem-pack" style="margin-top:8px">📦 СОБРАТЬ RESOURCE PACK</button>
+                <div class="totem-status" id="totem-pack-status">Resource pack будет собран прямо в браузере.</div>
+            </div>
+            <div class="totem-module">
+                <h3>ГОТОВАЯ КОМАНДА</h3>
+                <p>Для Minecraft Java 26.2:</p>
+                <div class="totem-command" id="totem-command">give @s minecraft:totem_of_undying[minecraft:custom_model_data={strings:["troll_totem_10001"]}]</div>
+                <button class="btn" id="btn-copy-totem" style="margin-top:8px">📋 КОПИРОВАТЬ</button>
+                <div class="totem-status" id="totem-result">Ожидание текстуры...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="dev-assets-modal" aria-hidden="true">
+        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="dev-assets-title">
+            <div class="modal-title" id="dev-assets-title">🧪 ASSET LAB // В РАЗРАБОТКЕ</div>
+            <div class="panel-hint" style="border-left-color:#ff0055">Этот раздел пока закрыт. Здесь позже появятся экспериментальные инструменты TROLL_OS для создания пользовательских ресурсов Minecraft.</div>
+            <div class="rank-grid">
+                <div class="rank-item unlocked">
+                    <div class="rank-top"><span class="rank-name">CUSTOM TOTEM</span><span class="rank-status ok">READY</span></div>
+                    <div class="rank-effect">Кастомные текстуры тотема + генерация resource pack для Minecraft 26.2.</div>
+                    <div class="rank-condition">Статус: <strong>модуль готов, UI скрыт</strong></div>
+                </div>
+                <div class="rank-item locked">
+                    <div class="rank-top"><span class="rank-name">CUSTOM MAP</span><span class="rank-status lock">LOCKED</span></div>
+                    <div class="rank-effect">Генерация уникальных изображений карт без предварительной ручной подготовки.</div>
+                    <div class="rank-condition">Статус: <strong>в разработке</strong></div>
+                </div>
+                <div class="rank-item locked">
+                    <div class="rank-top"><span class="rank-name">CUSTOM ITEM</span><span class="rank-status lock">LOCKED</span></div>
+                    <div class="rank-effect">Кастомные модели предметов, оружия и декоративных объектов.</div>
+                    <div class="rank-condition">Статус: <strong>в разработке</strong></div>
+                </div>
+                <div class="rank-item locked">
+                    <div class="rank-top"><span class="rank-name">ASSET SYNC</span><span class="rank-status lock">LOCKED</span></div>
+                    <div class="rank-effect">Автоматическая передача resource pack в текущий мир через Minecraft-мод.</div>
+                    <div class="rank-condition">Статус: <strong>экспериментальный модуль</strong></div>
+                </div>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:14px">
+                <button class="btn" id="btn-close-dev-assets" style="width:auto;min-width:140px">ЗАКРЫТЬ</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard">
+
+        <!-- СТАТИСТИКА ПАНЕЛИ -->
+        <div class="card stats-card" id="world-stats-card">
+            <h2>Системный Монитор</h2>
+            <div class="stats-subline">
+                <span id="world-online-line"><span class="offline-pulse"></span>ПИНГ ИГРЫ...</span>
+                <span id="world-last-update">STATUS // --</span>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-box"><div class="stat-label">СВЯЗЬ С ИГРОЙ</div><div class="stat-value dim" id="stat-players">ПИНГ...</div></div>
+                <div class="stat-box"><div class="stat-label">Режим</div><div class="stat-value good" id="stat-player-names">SINGLEPLAYER</div></div>
+                <div class="stat-box"><div class="stat-label">Угроза / HEAT</div><div class="stat-value dim" id="stat-last-death">0%</div></div>
+                <div class="stat-box"><div class="stat-label">Активные эффекты</div><div class="stat-value good" id="stat-event-count">0</div></div>
+                <div class="stat-box"><div class="stat-label">Отправлено команд</div><div class="stat-value" id="stat-commands">0</div></div>
+                <div class="stat-box"><div class="stat-label">Аптайм TROLL_OS</div><div class="stat-value" id="stat-session">00:00:00</div></div>
+            </div>
+            <div class="stats-events">
+                <div class="events-header"><span>АКТИВНЫЕ ЭФФЕКТЫ (ЛОКАЛЬНЫЙ ТРЕКЕР)</span><span id="stat-world-state">SYSTEM // UNKNOWN</span></div>
+                <div class="events-list" id="stat-active-events"><span class="no-events">Ожидание команд для логгирования...</span></div>
+            </div>
+        </div>
+
+        <!-- РАЗДЕЛ 1: МУТАНТЫ -->
+        <div class="card">
+            <h2>Инкубатор Сущностей</h2>
+            <div class="form-group">
+                <label>Сущность</label>
+                <select id="adv-mob-type">
+                    <optgroup label="😈 Враждебные (Монстры)">
+                        <option value="creeper">Крипер</option>
+                        <option value="zombie">Зомби</option>
+                        <option value="skeleton">Скелет</option>
+                        <option value="spider">Паук</option>
+                        <option value="witch">Ведьма</option>
+                        <option value="enderman">Эндермен</option>
+                        <option value="phantom">Фантом</option>
+                        <option value="pillager">Разбойник</option>
+                        <option value="ravager">Разоритель</option>
+                        <option value="warden">Варден</option>
+                    </optgroup>
+                    <optgroup label="🐮 Мирные / Нейтральные">
+                        <option value="cow">Корова</option>
+                        <option value="pig">Свинья</option>
+                        <option value="sheep">Овца</option>
+                        <option value="chicken">Курица</option>
+                        <option value="villager">Житель</option>
+                        <option value="iron_golem">Железный голем</option>
+                        <option value="bee">Пчела (Злая)</option>
+                        <option value="axolotl">Аксолотль</option>
+                    </optgroup>
+                </select>
+            </div>
+            <div class="form-row">
+                <div class="form-group" style="flex: 2;">
+                    <label data-tooltip="Красный текст над головой моба">Имя объекта</label>
+                    <input type="text" id="adv-mob-name" placeholder="Напр: Обернись">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label data-tooltip="Максимально 20 особей за раз">Кол-во</label>
+                    <input type="number" id="adv-mob-count" min="1" max="20" value="1">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Генетическая модификация</label>
+                <select id="adv-mob-effect">
+                    <option value="none">Базовый ген</option>
+                    <option value="speed">Спидстер (Супер-скорость)</option>
+                    <option value="strength">Берсерк (Супер-сила)</option>
+                    <option value="invisibility">Хищник (Невидимость)</option>
+                </select>
+            </div>
+            <div class="checkbox-group">
+                <label class="checkbox-label" data-tooltip="Друг будет видеть силуэт сквозь стены.">
+                    <input type="checkbox" id="adv-mob-glowing"> Рентген-маркер
+                </label>
+                <label class="checkbox-label" data-tooltip="Моб не издает звуков.">
+                    <input type="checkbox" id="adv-mob-silent"> Бесшумный режим
+                </label>
+            </div>
+            <button class="btn danger" onclick="spawnAdvancedMob()">Выпустить объект(ы)</button>
+        </div>
+
+        <!-- РАЗДЕЛ 2: ПРЕДМЕТЫ -->
+        <div class="card">
+            <h2>Генератор Лута</h2>
+            
+            <div class="form-group">
+                <label>Тип предмета</label>
+                <select id="item-id">
+                    <optgroup label="⚔️ Мечи">
+                        <option value="wooden_sword">Деревянный меч</option>
+                        <option value="stone_sword">Каменный меч</option>
+                        <option value="iron_sword">Железный меч</option>
+                        <option value="golden_sword">Золотой меч</option>
+                        <option value="diamond_sword">Алмазный меч</option>
+                        <option value="netherite_sword">Незеритовый меч</option>
+                    </optgroup>
+                    <optgroup label="⛏️ Инструменты">
+                        <option value="wooden_pickaxe">Деревянная кирка</option>
+                        <option value="iron_axe">Железный топор</option>
+                        <option value="diamond_pickaxe">Алмазная кирка</option>
+                        <option value="netherite_pickaxe">Незеритовая кирка</option>
+                        <option value="diamond_shovel">Алмазная лопата</option>
+                        <option value="golden_hoe">Золотая мотыга</option>
+                    </optgroup>
+                    <optgroup label="🛡️ Броня">
+                        <option value="leather_helmet">Кожаная шапка</option>
+                        <option value="iron_chestplate">Железный нагрудник</option>
+                        <option value="golden_leggings">Золотые поножи</option>
+                        <option value="diamond_boots">Алмазные ботинки</option>
+                        <option value="netherite_chestplate">Незеритовый нагрудник</option>
+                        <option value="shield">Щит</option>
+                    </optgroup>
+                    <optgroup label="🗑️ Хлам и мусор">
+                        <option value="rotten_flesh">Гнилая плоть</option>
+                        <option value="poisonous_potato">Ядовитая картошка</option>
+                        <option value="dead_bush">Мертвый куст</option>
+                        <option value="dirt">Ком земли</option>
+                        <option value="stick">Палка</option>
+                        <option value="spider_eye">Паучий глаз</option>
+                    </optgroup>
+                    <optgroup label="🧱 Блоки и объекты">
+                        <option value="tnt">Динамит (TNT)</option>
+                        <option value="cobweb">Паутина</option>
+                        <option value="obsidian">Обсидиан</option>
+                        <option value="bedrock">Бедрок</option>
+                        <option value="lava_bucket">Ведро лавы</option>
+                        <option value="water_bucket">Ведро воды</option>
+                        <option value="anvil">Наковальня</option>
+                        <option value="carved_pumpkin">Вырезанная тыква</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group" style="flex: 2;">
+                    <label data-tooltip="Предмет получит синее имя.">Свое Имя</label>
+                    <input type="text" id="item-name" placeholder="Напр: Мусоровоз">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Кол-во</label>
+                    <input type="number" id="item-count" min="1" max="64" value="1">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Аномальное зачарование</label>
+                <select id="item-enchant">
+                    <option value="none">Отсутствует</option>
+                    <option value="knockback">Космическая бита (Отбрасывание 25)</option>
+                    <option value="sharpness">Аннигилятор (Острота 25)</option>
+                    <option value="efficiency">Супер-бур (Эффективность 25)</option>
+                    <option value="fortune">Магнат (Удача 25)</option>
+                    <option value="protection">Абсолютный Танк (Защита 25)</option>
+                    <option value="fire_aspect">Адское пламя (Заговор огня 10)</option>
+                    <option value="binding">Суперклей (Проклятие несъемности)</option>
+                    <option value="vanishing">Мираж (Проклятие утраты)</option>
+                </select>
+            </div>
+            
+            <button class="btn" onclick="giveCustomItem()">Инжект в инвентарь</button>
+        </div>
+
+        <!-- РАЗДЕЛ 3: МИР -->
+        <div class="card">
+            <h2>Контроль Среды</h2>
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <h3 class="category" style="margin:0;">Атмосфера</h3>
+                <div class="form-row" style="margin: 0;">
+                    <button class="btn" onclick="sendCmd('time set night')">🌙 Ночь</button>
+                    <button class="btn" onclick="sendCmd('time set day')">☀️ День</button>
+                </div>
+                <div class="form-row" style="margin: 0;">
+                    <button class="btn" onclick="sendCmd('weather thunder')">⛈️ Гроза</button>
+                    <button class="btn" onclick="sendCmd('weather clear')">🌤️ Ясно</button>
+                </div>
+                <h3 class="category" style="margin-top: 10px;">Пространство</h3>
+                <button class="btn warn" data-tooltip="Телепортирует всех игроков на 20 блоков вертикально вверх" onclick="sendCmd('tp @a ~ ~20 ~')">Антигравитация (Вверх)</button>
+                <button class="btn warn" data-tooltip="Раскидывает игроков в радиусе 100 блоков по случайным координатам" onclick="sendCmd('execute as @a at @s run spreadplayers ~ ~ 10 100 false @s')">Случайный разброс</button>
+            </div>
+        </div>
+
+        <!-- РАЗДЕЛ 4: МЕГА-ТРОЛЛИНГ -->
+        <div class="card troll-card">
+            <h2>Панель Издевательств</h2>
+            <div class="panel-hint">Все эффекты собраны по типу воздействия. Наведи курсор на кнопку — TROLL_OS покажет, что именно произойдёт.</div>
+
+            <h3 class="category">Аудио + Психоатаки</h3>
+            <div class="troll-grid">
+                <button class="btn" data-tooltip="Громкое шипение крипера. Игрок может подумать, что крипер уже рядом и сейчас взорвётся." onclick="sendCmd('execute as @a at @s run playsound entity.creeper.primed master @s ~ ~ ~ 10 1')">😈 Шипение крипера</button>
+                <button class="btn" data-tooltip="Запускает звук горящего TNT без настоящего взрыва." onclick="sendCmd('execute as @a at @s run playsound entity.tnt.primed master @s ~ ~ ~ 10 1')">💣 Заряд ТНТ</button>
+                <button class="btn" data-tooltip="Громкий пульс Вардена, создающий ощущение, что рядом появился опасный моб." onclick="sendCmd('execute as @a at @s run playsound entity.warden.heartbeat master @s ~ ~ ~ 10 1')">💀 Пульс Вардена</button>
+                <button class="btn" data-tooltip="Резкий звук взгляда Эндермена. Идеален для внезапного испуга." onclick="sendCmd('execute as @a at @s run playsound entity.enderman.stare master @s ~ ~ ~ 10 1')">👁 Крик Эндермена</button>
+                <button class="btn" data-tooltip="Атмосферные звуки пещер без необходимости реально находиться в пещере." onclick="sendCmd('execute as @a at @s run playsound ambient.cave master @s ~ ~ ~ 10 1')">🕳 Звуки пещер</button>
+                <button class="btn" data-tooltip="Громкий звук Гаста, будто он внезапно оказался неподалёку." onclick="sendCmd('execute as @a at @s run playsound entity.ghast.warn master @s ~ ~ ~ 10 0.8')">👻 Гаст за спиной</button>
+                <button class="btn" data-tooltip="Звук появления Визера. Очень громкий и тревожный." onclick="sendCmd('execute as @a at @s run playsound entity.wither.spawn master @s ~ ~ ~ 8 1')">☠️ Визер-вызов</button>
+                <button class="btn" data-tooltip="Гром среди ясного неба — звук молнии без обязательной грозы." onclick="sendCmd('execute as @a at @s run playsound entity.lightning_bolt.thunder master @s ~ ~ ~ 8 1')">⚡ Гром среди ясного</button>
+                <button class="btn" data-tooltip="Проигрывает звук получения уровня, хотя никакого уровня игрок не получил." onclick="sendCmd('execute as @a at @s run playsound entity.player.levelup master @s ~ ~ ~ 6 0.5')">🎉 Фальшивый левелап</button>
+                <button class="btn" data-tooltip="Звук подбора XP создаёт ощущение, что где-то прямо сейчас идёт награда." onclick="sendCmd('execute as @a at @s run playsound entity.experience_orb.pickup master @s ~ ~ ~ 6 2')">💎 Фальшивый XP</button>
+                <button class="btn" data-tooltip="Громкий звук падения наковальни. Идеально, чтобы заставить игрока резко обернуться." onclick="sendCmd('execute as @a at @s run playsound block.anvil.land master @s ~ ~ ~ 8 0.7')">🔨 Наковальня</button>
+                <button class="btn" data-tooltip="Создаёт ощущение, что вокруг внезапно появились летучие мыши." onclick="sendCmd('execute as @a at @s run playsound entity.bat.ambient master @s ~ ~ ~ 8 1')">🦇 Летучие мыши</button>
+                <button class="btn" data-tooltip="Громовая атака без реального изменения погоды." onclick="sendCmd('execute as @a at @s run playsound ambient.weather.thunder master @s ~ ~ ~ 10 1')">🌩 Ложная гроза</button>
+                <button class="btn danger" data-tooltip="От него не убежать..." onclick="giveMap(2)">☠️ Он придет...</button>
+            </div>
+
+            <h3 class="category">Статусы + Сенсорное подавление</h3>
+            <div class="troll-grid">
+                <button class="btn" data-tooltip="Полностью режет обзор примерно на 15 секунд." onclick="sendCmd('effect give @a blindness 15 1 true')">🙈 Слепота</button>
+                <button class="btn" data-tooltip="Сильно искажает картинку и заставляет камеру шататься." onclick="sendCmd('effect give @a nausea 15 1 true')">🤢 Тошнота</button>
+                <button class="btn" data-tooltip="Отправляет игроков плавно подниматься в воздух." onclick="sendCmd('effect give @a levitation 10 5 true')">🛸 НЛО</button>
+                <button class="btn" data-tooltip="Почти полностью отключает нормальную скорость добычи блоков на минуту." onclick="sendCmd('effect give @a mining_fatigue 60 3 true')">⛏ Усталость</button>
+                <button class="btn" data-tooltip="Быстро заставляет полоску голода уходить вниз." onclick="sendCmd('effect give @a hunger 60 3 true')">🍗 Голодовка</button>
+                <button class="btn" data-tooltip="Ночное зрение на 25 секунд. Визуально похоже на рентген-режим." onclick="sendCmd('effect give @a night_vision 25 0 true')">👁 Рентген</button>
+                <button class="btn" data-tooltip="Полная темнота примерно на 8 секунд." onclick="sendCmd('effect give @a darkness 8 0 true')">🌑 Тьма</button>
+                <button class="btn" data-tooltip="Сверхскорость на несколько секунд. Очень легко потерять контроль." onclick="sendCmd('effect give @a speed 6 4 true')">⚡ Турбо</button>
+                <button class="btn" data-tooltip="Почти полностью останавливает движение игрока." onclick="sendCmd('effect give @a slowness 8 4 true')">🐌 Улитка</button>
+                <button class="btn" data-tooltip="Даёт высокий прыжок на несколько секунд." onclick="sendCmd('effect give @a jump_boost 8 4 true')">🦘 Лунный прыжок</button>
+                <button class="btn" data-tooltip="Сильно режет урон ближнего боя примерно на 20 секунд." onclick="sendCmd('effect give @a weakness 20 3 true')">🩸 Слабак</button>
+                <button class="btn" data-tooltip="Сила III примерно на 10 секунд. Отлично для внезапного берсерка." onclick="sendCmd('effect give @a strength 10 2 true')">💪 Берсерк</button>
+                <button class="btn" data-tooltip="Сильно уменьшает входящий урон примерно на 10 секунд." onclick="sendCmd('effect give @a resistance 10 3 true')">🛡 Танк</button>
+                <button class="btn" data-tooltip="Дополнительная левитация: игрок медленно всплывает вверх." onclick="sendCmd('effect give @a levitation 6 2 true')">🛸 Левитация+</button>
+                <button class="btn" data-tooltip="Медленное падение. Полезно как помощь — или чтобы сорвать обычную физику." onclick="sendCmd('effect give @a slow_falling 20 0 true')">🪶 Пёрышко</button>
+                <button class="btn" data-tooltip="Ещё более сильная усталость добычи на короткий срок." onclick="sendCmd('effect give @a mining_fatigue 12 4 true')">⛏ Анти-Кирка</button>
+                <button class="btn" data-tooltip="Показывает игрока светящимся сквозь стены на несколько секунд." onclick="sendCmd('effect give @a glowing 12 0 true')">✨ Светляк</button>
+            </div>
+
+            <h3 class="category">Физика + Движение</h3>
+            <div class="troll-grid">
+                <button class="btn warn" data-tooltip="Разворачивает игрока ровно на 180 градусов." onclick="sendCmd('execute as @a at @s run tp @s ~ ~ ~ ~180 ~')">🔄 Разворот 180°</button>
+                <button class="btn warn" data-tooltip="Ставит паутину прямо в ногах каждого игрока." onclick="sendCmd('execute as @a at @s run setblock ~ ~ ~ cobweb')">🕸 Паутина в ноги</button>
+                <button class="btn warn" data-tooltip="Создаёт воду на уровне головы и заставляет игроков внезапно захлёбываться." onclick="sendCmd('execute as @a at @s run setblock ~ ~1 ~ water')">🌊 Затопить голову</button>
+                <button class="btn danger" data-tooltip="Вызывает настоящую молнию на позициях игроков." onclick="sendCmd('execute as @a at @s run summon lightning_bolt ~ ~ ~')">⚡ Удар молнии</button>
+                <button class="btn danger" data-tooltip="Ставит лаву над головой. Крайне опасный эффект." onclick="sendCmd('execute as @a at @s run setblock ~ ~3 ~ lava')">🌋 Лава-лава</button>
+                <button class="btn warn" data-tooltip="Телепортирует игрока примерно на 3 блока вперёд относительно направления взгляда." onclick="sendCmd('execute as @a at @s run tp @s ^ ^ ^3')">💨 Дэш</button>
+                <button class="btn warn" data-tooltip="Очень резко запускает игрока вверх." onclick="sendCmd('effect give @a levitation 2 12 true')">🚀 Катапульта</button>
+                <button class="btn warn" data-tooltip="Небольшой случайный телепорт в радиусе около 12 блоков." onclick="sendCmd('execute as @a at @s run spreadplayers ~ ~ 2 12 false @s')">🎲 Микро-телепорт</button>
+                <button class="btn warn" data-tooltip="Поворачивает игроков на 90 градусов и ломает привычную ориентацию." onclick="sendCmd('execute as @a at @s run tp @s ~ ~ ~ ~90 ~')">↪ Разворот 90°</button>
+                <button class="btn warn" data-tooltip="Поднимает игроков на 20 блоков. Лучше не использовать над пропастью." onclick="sendCmd('tp @a ~ ~20 ~')">⬆ Антигравитация</button>
+            </div>
+
+            <h3 class="category">Визуал + Системные приколы</h3>
+            <div class="troll-grid">
+                <button class="btn" data-tooltip="Выпускает большое облако огненных частиц." onclick="sendCmd('execute as @a at @s run particle minecraft:flame ~ ~1 ~ 0.8 1 0.8 0.02 120 force')">🔥 Огненный фонтан</button>
+                <button class="btn" data-tooltip="Открывает визуальную завесу из портальных частиц." onclick="sendCmd('execute as @a at @s run particle minecraft:portal ~ ~1 ~ 1 1 1 0.2 160 force')">🌀 Портал</button>
+                <button class="btn" data-tooltip="Весёлые частицы вокруг игроков — выглядит как конфетти." onclick="sendCmd('execute as @a at @s run particle minecraft:happy_villager ~ ~1 ~ 1 1 1 0.15 100 force')">✨ Конфетти</button>
+                <button class="btn" data-tooltip="Создаёт плотную дымовую завесу." onclick="sendCmd('execute as @a at @s run particle minecraft:smoke ~ ~1 ~ 1 1 1 0.03 100 force')">💨 Дымовая завеса</button>
+                <button class="btn" data-tooltip="Выбрасывает злые зелёные частицы, будто игра предупреждает об опасности." onclick="sendCmd('execute as @a at @s run particle minecraft:angry_villager ~ ~2 ~ 1 1 1 0.1 60 force')">😡 Злая аура</button>
+                <button class="btn" data-tooltip="Романтические сердечки. Максимально неуместный эффект посреди выживания." onclick="sendCmd('execute as @a at @s run particle minecraft:heart ~ ~2 ~ 1 1 1 0.1 40 force')">❤️ Романтика</button>
+                <button class="btn" data-tooltip="Большое сообщение НЕ ОБОРАЧИВАЙСЯ по центру экрана." onclick="sendCmd('title @a title {&quot;text&quot;:&quot;НЕ ОБОРАЧИВАЙСЯ&quot;,&quot;color&quot;:&quot;dark_red&quot;,&quot;bold&quot;:true}')">👁 НЕ ОБОРАЧИВАЙСЯ</button>
+                <button class="btn" data-tooltip="Системное сообщение от TROLL_OS в виде subtitle." onclick="sendCmd('title @a subtitle {&quot;text&quot;:&quot;TROLL_OS наблюдает...&quot;,&quot;color&quot;:&quot;gray&quot;,&quot;italic&quot;:true}')">📺 Системное сообщение</button>
+            </div>
+
+            <h3 class="category">Мобы + Окружение</h3>
+            <div class="troll-grid">
+                <button class="btn warn" data-tooltip="Спавнит неподвижную курицу, которая может выглядеть как странный наблюдатель." onclick="sendCmd('execute as @a at @s run summon chicken ~ ~ ~ {NoAI:1b}')">🐔 Наблюдатель</button>
+                <button class="btn danger" data-tooltip="Вызывает молниеносные удары по площади" onclick="sendCmd('execute as @e[limit=5] at @s run summon lightning_bolt ~ ~ ~')">⚡ Удар по площади</button>
+                <button class="btn danger" data-tooltip="Спавнит заряженного крипера рядом с игроками." onclick="sendCmd('execute as @a at @s run summon creeper ~ ~ ~ {powered:1b}')">💚 Заряженный гость</button>
+                <button class="btn warn" data-tooltip="Спавнит неподвижную летучую мышь над игроком — маленький шпион-паразит." onclick="sendCmd('execute as @a at @s run summon bat ~ ~2 ~ {NoAI:1b}')">🦇 Потолочный шпион</button>
+                <button class="btn warn" data-tooltip="Меняет блок под ногами на песок душ." onclick="sendCmd('execute as @a at @s run setblock ~ ~-1 ~ soul_sand')">🟫 Болото</button>
+                <button class="btn warn" data-tooltip="Запускает фейерверк возле игрока." onclick="sendCmd('execute as @a at @s run summon firework_rocket ~ ~2 ~')">🎆 Фейерверк</button>
+                <button class="btn warn" data-tooltip="Ставит порошковый снег чуть выше игрока — внезапная снежная ловушка." onclick="sendCmd('execute as @a at @s run setblock ~ ~1 ~ powder_snow')">❄️ Снежная ловушка</button>
+                <button class="btn warn" data-tooltip="Ставит слизневый блок под игроком. В зависимости от позиции можно устроить неожиданный отскок." onclick="sendCmd('execute as @a at @s run setblock ~ ~ ~ slime_block')">🟢 Желе под ногами</button>
+            </div>
+
+            <h3 class="category" style="border-bottom-color: #ff3232; color: #ff3232;">Инвентарь + Критические приколы</h3>
+            <div class="troll-grid">
+                <button class="btn warn" data-tooltip="Снимает шлем и надевает резную тыкву, закрывая обзор." onclick="sendCmd('item replace entity @a armor.head with carved_pumpkin')">🎃 Тыква на голову</button>
+                <button class="btn warn" data-tooltip="Заполняет карманы 64 ядовитыми картошками." onclick="sendCmd('give @a poisonous_potato 64')">🥔 Мусор в карман</button>
+                <button class="btn warn" data-tooltip="Выдаёт огромную пачку земли. Практически полезно, но максимально бессмысленно." onclick="sendCmd('give @a dirt 4096')">🧱 Стройматериал</button>
+                <button class="btn warn" data-tooltip="Надевает алмазную броню с почти сломанной прочностью." onclick="giveFragileArmor()">💎 Хрустальная броня</button>
+                <button class="btn warn" data-tooltip="Выдаёт легендарную деревянную мотыгу с Sharpness 255 и почти нулевой прочностью." onclick="sendCmd('give @a wooden_hoe[damage=58,enchantments={&quot;minecraft:sharpness&quot;:255}]')">🌾 Мотыга?</button>
+                <div class="purge-gate" style="grid-column:1 / -1;">
+                    <div class="purge-head">
+                        <span class="purge-title">☢ PURGE PROTOCOL // ДОСТУП ОГРАНИЧЕН</span>
+                        <span class="purge-progress" id="purge-progress">0 / 5</span>
+                    </div>
+                    <div class="purge-bar"><span id="purge-bar-fill"></span></div>
+                    <div class="purge-tasks" id="purge-task-list"></div>
+                </div>
+                <button class="btn danger" id="btn-purge-inventory" style="grid-column: 1 / -1;" data-tooltip="🔒 Протокол полного удаления инвентаря заблокирован. Выполните все задания разблокировки. После открытия команда всё равно проходит через HEAT-защиту." onclick="requestInventoryPurge()">🔒 ПОЛНОЕ УНИЧТОЖЕНИЕ ИНВЕНТАРЯ • LOCKED</button>
+            </div>
+
+            <h3 class="category" style="margin-top:18px; color:#00ffaa;">БЫСТРЫЕ КОМБО</h3>
+            <div class="troll-grid">
+                <button class="btn hot" id="btn-rng2" data-tooltip="Выбирает случайный безопасный тролль из набора TROLL_OS.">🎲 RNG-МАЯК</button>
+                <button class="btn hot" id="btn-nightmare2" data-tooltip="Запускает короткую цепочку из нескольких неприятных эффектов подряд.">☠️ NIGHTMARE+</button>
+                <button class="btn hot" id="btn-chaos2" data-tooltip="Запускает серию быстрых эффектов, звуков, погоды и статусов.">💥 CHAOS LOOP</button>
+                <button class="btn hot" id="btn-exe2" data-tooltip="Запускает EXE BURST: молния, красный title, гром и системный FX-всплеск.">☢ EXE BURST</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="toast-container"></div>
+    <div id="fx-layer"></div>
+
+    <div class="modal-backdrop" id="identity-gate">
+        <div class="modal-box">
+            <div class="modal-title">TROLL_OS // IDENTITY CONSOLE</div>
+            <div id="identity-gate-content"></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+                <button class="btn hot" id="identity-save" style="max-width:240px;">ИНИЦИАЛИЗИРОВАТЬ USER</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="modal-backdrop">
+        <div class="modal-box">
+            <div class="modal-title" id="modal-title">TROLL_OS</div>
+            <div id="modal-content"></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+                <button class="btn" id="modal-close" style="max-width:180px;">ЗАКРЫТЬ</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const IP_ADDRESS = "https://a3d2-76-164-203-135.ngrok-free.app"; // Обнови свой Ngrok тут!
+
+
+        // --- ИДЕНТИФИКАЦИЯ / ЗАПОМИНАНИЕ ПОЛЬЗОВАТЕЛЯ ---
+        const TROLL_USER_KEY = 'trollIdentityV1';
+        const TROLL_USER_LIST_KEY = 'trollKnownUsersV1';
+        const TROLL_UID_KEY = 'trollBrowserUidV1';
+        const TROLL_PURGE_KEY_PREFIX = 'trollPurgeQuestV1_';
+
+        function makeUid(){
+            const seed = Math.random().toString(36).slice(2,8).toUpperCase();
+            return `USR-${seed}`;
+        }
+        function getOrCreateUid(){
+            let uid = localStorage.getItem(TROLL_UID_KEY);
+            if(!uid){ uid=makeUid(); localStorage.setItem(TROLL_UID_KEY,uid); }
+            return uid;
+        }
+        const TROLL_UID = getOrCreateUid();
+        let TROLL_USER = null;
+
+        function safeUserName(value){
+            return String(value||'').replace(/[\\<>"']/g,'').replace(/\\s+/g,' ').trim().slice(0,20);
+        }
+        function escapeHtml(value){
+            return String(value).replace(/[&<>"']/g, ch=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[ch]));
+        }
+        function loadIdentity(){
+            try{ TROLL_USER = JSON.parse(localStorage.getItem(TROLL_USER_KEY)||'null'); }catch{ TROLL_USER=null; }
+            if(!TROLL_USER || !TROLL_USER.name) return false;
+            TROLL_USER.name=safeUserName(TROLL_USER.name) || 'USER';
+            TROLL_USER.uid=TROLL_USER.uid || TROLL_UID;
+            TROLL_USER.visits=Number(TROLL_USER.visits||0)+1;
+            TROLL_USER.lastSeen=Date.now();
+            saveIdentity();
+            return true;
+        }
+        function saveIdentity(){
+            localStorage.setItem(TROLL_USER_KEY, JSON.stringify(TROLL_USER));
+            const qKey=TROLL_PURGE_KEY_PREFIX + TROLL_UID;
+            let q={};
+            try{q=JSON.parse(localStorage.getItem(qKey)||'{}');}catch{}
+            q.visits=Math.max(Number(q.visits||0),Number(TROLL_USER?.visits||0));
+            localStorage.setItem(qKey, JSON.stringify(q));
+            let list=[];
+            try{list=JSON.parse(localStorage.getItem(TROLL_USER_LIST_KEY)||'[]');}catch{list=[];}
+            const idx=list.findIndex(x=>x.uid===TROLL_USER.uid);
+            const record={uid:TROLL_USER.uid,name:TROLL_USER.name,visits:TROLL_USER.visits,firstSeen:TROLL_USER.firstSeen,lastSeen:TROLL_USER.lastSeen};
+            if(idx>=0) list[idx]=record; else list.unshift(record);
+            localStorage.setItem(TROLL_USER_LIST_KEY, JSON.stringify(list.slice(0,25)));
+        }
+        function setUserNameEverywhere(){
+            const name=TROLL_USER?.name || 'USER';
+            const author=document.getElementById('author-name');
+            const toolbar=document.getElementById('toolbar-user-name');
+            const pageTitle=document.getElementById('page-title');
+            if(author){ author.textContent=name; author.dataset.text=name; }
+            if(toolbar) toolbar.textContent=name;
+            if(pageTitle) pageTitle.textContent=`TROLL_OS // ${name.toUpperCase()}`;
+            document.documentElement.dataset.user=name;
+        }
+        function openIdentityConsole(firstRun=false){
+            const current=TROLL_USER?.name || '';
+            const gate=document.getElementById('identity-gate');
+            const content=document.getElementById('identity-gate-content');
+            if(firstRun){
+                content.innerHTML=`
+                    <div class="identity-console">
+                        <div class="console-line">[ BOOT / IDENTITY HANDSHAKE ]</div>
+                        <div><span class="prompt">root@troll_os:~$</span> identify --register</div>
+                        <div class="identity-meta">
+                            <div><span>BROWSER UID</span><strong>${escapeHtml(TROLL_UID)}</strong></div>
+                            <div><span>STATUS</span><strong>NEW USER</strong></div>
+                        </div>
+                        <div style="margin-top:8px;color:#aaa">Введи имя, под которым TROLL_OS будет обращаться к тебе. Система запомнит его в этом браузере.</div>
+                        <input id="identity-name-input" maxlength="20" autocomplete="nickname" spellcheck="false" placeholder="Например: Max" value="${escapeHtml(current)}">
+                        <div class="identity-note">Локальная память браузера: имя, UID, количество посещений и последнее появление.</div>
+                    </div>`;
+                gate.classList.add('open');
+                setTimeout(()=>document.getElementById('identity-name-input')?.focus(),90);
+            }else{
+                openModal('USER PROFILE // IDENTITY', `
+                    <div class="identity-console">
+                        <div class="console-line">[ PROFILE CONSOLE ]</div>
+                        <div><span class="prompt">user@troll_os:~$</span> profile --edit</div>
+                        <div class="identity-meta">
+                            <div><span>BROWSER UID</span><strong>${escapeHtml(TROLL_UID)}</strong></div>
+                            <div><span>VISITS</span><strong>${Number(TROLL_USER?.visits||0)}</strong></div>
+                        </div>
+                        <input id="identity-edit-input" maxlength="20" autocomplete="nickname" spellcheck="false" value="${escapeHtml(current)}">
+                        <button class="btn" id="identity-edit-save">СОХРАНИТЬ ИМЯ</button>
+                        <div class="identity-note">Текущий профиль хранится только в localStorage этого браузера.</div>
+                    </div>`);
+                const input=document.getElementById('identity-edit-input');
+                const save=document.getElementById('identity-edit-save');
+                const commit=()=>{
+                    const name=safeUserName(input?.value);
+                    if(!name){ showToast('Имя не может быть пустым',true); input?.focus(); return; }
+                    TROLL_USER.name=name; TROLL_USER.lastSeen=Date.now(); saveIdentity(); setUserNameEverywhere();
+                    trollLog(`IDENTITY // USER RENAMED: ${name}`,'good'); showToast(`👤 Имя профиля изменено: ${name}`); closeModal();
+                };
+                save?.addEventListener('click',commit); input?.addEventListener('keydown',e=>{if(e.key==='Enter')commit();});
+                setTimeout(()=>input?.focus(),90);
+            }
+        }
+        function initializeIdentity(){
+            if(loadIdentity()){
+                setUserNameEverywhere();
+                showToast(`👤 С возвращением, ${TROLL_USER.name}`);
+                trollLog(`IDENTITY // RETURNING USER: ${TROLL_USER.name}`,'good');
+            }else{
+                TROLL_USER={uid:TROLL_UID,name:'USER',visits:0,firstSeen:Date.now(),lastSeen:Date.now()};
+                setUserNameEverywhere();
+                openIdentityConsole(true);
+            }
+        }
+
+        document.getElementById('identity-save')?.addEventListener('click',()=>{
+            const input=document.getElementById('identity-name-input');
+            const name=safeUserName(input?.value);
+            if(!name){showToast('Введи имя пользователя',true);input?.focus();return;}
+            TROLL_USER={uid:TROLL_UID,name,visits:1,firstSeen:Date.now(),lastSeen:Date.now()};
+            saveIdentity(); setUserNameEverywhere();
+            document.getElementById('identity-gate')?.classList.remove('open');
+            trollLog(`IDENTITY // NEW USER: ${name}`,'good');
+            showToast(`✅ Добро пожаловать, ${name}`);
+        });
+        document.getElementById('identity-gate')?.addEventListener('click',(e)=>{
+            if(e.target.id==='identity-gate') e.preventDefault();
+        });
+        document.getElementById('btn-identity')?.addEventListener('click',()=>openIdentityConsole(false));
+
+        // --- PURGE QUEST / ДОСТУП К КРИТИЧЕСКОЙ КОМАНДЕ ---
+        function purgeQuestDefault(){
+            return {commands:0, unique:[], peakHeat:0, visits:0, classes:[], unlocked:false};
+        }
+        function getPurgeQuest(){
+            const key=TROLL_PURGE_KEY_PREFIX+TROLL_UID;
+            let q=purgeQuestDefault();
+            try{ q=Object.assign(q, JSON.parse(localStorage.getItem(key)||'{}')); }catch{}
+            q.commands=Number(q.commands||0);
+            q.peakHeat=Number(q.peakHeat||0);
+            q.visits=Number(q.visits||0);
+            q.unique=Array.isArray(q.unique)?q.unique:[];
+            q.classes=Array.isArray(q.classes)?q.classes:[];
+            q.unlocked=Boolean(q.unlocked);
+            return q;
+        }
+        function savePurgeQuest(q){
+            localStorage.setItem(TROLL_PURGE_KEY_PREFIX+TROLL_UID, JSON.stringify(q));
+        }
+        function getPurgeTasks(){
+            const q=getPurgeQuest();
+            return [
+                {id:'commands',done:q.commands>=10,text:'Отправить 10 команд',sub:`${Math.min(q.commands,10)} / 10`},
+                {id:'unique',done:q.unique.length>=5,text:'Использовать 5 разных команд',sub:`${Math.min(q.unique.length,5)} / 5`},
+                {id:'classes',done:q.classes.length>=4,text:'Проверить 4 класса эффектов',sub:`${Math.min(q.classes.length,4)} / 4`},
+                {id:'peakHeat',done:q.peakHeat>=70,text:'Пережить HEAT 70%',sub:`максимум ${Math.round(q.peakHeat)}%`},
+                {id:'visits',done:q.visits>=3,text:'Посетить TROLL_OS 3 раза',sub:`визитов: ${Math.min(q.visits,3)}`},
+            ];
+        }
+        function updatePurgeQuestFromActivity(command, profile){
+            const q=getPurgeQuest();
+            q.commands=Math.max(q.commands, Number(localStorage.getItem('trollPurgeCommandTotal_'+TROLL_UID)||0));
+            if(command && !q.unique.includes(command)) q.unique.push(command);
+            if(profile?.tag && !q.classes.includes(profile.tag)) q.classes.push(profile.tag);
+            q.peakHeat=Math.max(q.peakHeat, TROLL_HEAT);
+            q.visits=Math.max(q.visits, Number(TROLL_USER?.visits||0));
+            const done=getPurgeTasks().filter(t=>t.done).length;
+            // Re-evaluate after field changes (without relying on stale q from getPurgeTasks).
+            const complete=q.commands>=10 && q.unique.length>=5 && q.classes.length>=4 && q.peakHeat>=70 && q.visits>=3;
+            if(complete && !q.unlocked){ q.unlocked=true; showToast('☢ PURGE PROTOCOL // ACCESS GRANTED'); trollLog('SECURITY // PURGE PROTOCOL UNLOCKED','good'); screenFlash('red'); }
+            savePurgeQuest(q);
+            renderPurgeQuest();
+        }
+        function renderPurgeQuest(){
+            const q=getPurgeQuest();
+            q.visits=Math.max(q.visits,Number(TROLL_USER?.visits||0));
+            const tasks=getPurgeTasks();
+            const count=tasks.filter(t=>t.done).length;
+            const progress=document.getElementById('purge-progress');
+            const fill=document.getElementById('purge-bar-fill');
+            const list=document.getElementById('purge-task-list');
+            const btn=document.getElementById('btn-purge-inventory');
+            if(progress) progress.textContent=`${count} / ${tasks.length}`;
+            if(fill) fill.style.width=`${(count/tasks.length)*100}%`;
+            if(list) list.innerHTML=tasks.map(t=>`<div class="purge-task ${t.done?'done':''}"><span class="check">${t.done?'✓':'•'}</span><span>${escapeHtml(t.text)}<small>${escapeHtml(t.sub)}</small></span></div>`).join('');
+            if(btn){
+                if(q.unlocked){
+                    btn.textContent='☢ ПОЛНОЕ УНИЧТОЖЕНИЕ ИНВЕНТАРЯ • UNLOCKED';
+                    btn.classList.add('purge-unlocked');
+                    btn.dataset.tooltip='☢ Протокол разблокирован. Запрашивает финальное подтверждение, затем отправляет clear @a. Команда всё ещё ограничивается HEAT.';
+                }else{
+                    btn.textContent=`🔒 ПОЛНОЕ УНИЧТОЖЕНИЕ ИНВЕНТАРЯ • ${count}/5`;
+                    btn.classList.remove('purge-unlocked');
+                    btn.dataset.tooltip='🔒 Протокол закрыт. Выполните все 5 заданий — прогресс сохраняется для этого пользователя.';
+                }
+            }
+            savePurgeQuest(q);
+        }
+        function requestInventoryPurge(){
+            const q=getPurgeQuest();
+            if(!q.unlocked){
+                openModal('PURGE PROTOCOL // LOCKED', `<div class="heat-console"><div class="console-line">[ SECURITY / DESTRUCTIVE MODULE ]</div><div><span class="prompt">root@troll_os:~$</span> purge --request-access</div><div style="margin-top:10px;color:#aaa">Доступ к полному удалению инвентаря считается критическим. Выполните все задания разблокировки в основном окне.</div><div style="margin-top:12px;color:#ff6b6b">Статус: ${getPurgeTasks().filter(t=>t.done).length}/5</div></div>`);
+                return;
+            }
+            if(TROLL_HEAT>=95){ showToast('⛔ BLACKOUT: дождитесь снижения HEAT',true); return; }
+            if(!confirm('КРИТИЧЕСКОЕ ПРЕДУПРЕЖДЕНИЕ\n\nУдалить ВЕСЬ инвентарь у всех игроков?\nЭто действие необратимо.')) return;
+            sendCmd('clear @a');
+        }
+
+        // --- ЭФФЕКТ МАТРИЦЫ ---
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*EXEPLAYER';
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = Array.from({length: columns}).fill(1);
+        
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(2, 5, 4, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#0fa';
+            ctx.font = fontSize + 'px monospace';
+            drops.forEach((y, i) => {
+                const text = letters.charAt(Math.floor(Math.random() * letters.length));
+                ctx.fillText(text, i * fontSize, y * fontSize);
+                if (y * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            });
+        }
+        setInterval(drawMatrix, 33);
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // --- СИСТЕМНЫЙ МОНИТОР (БЕЗ ОШИБКИ ПАРСИНГА) ---
+        const TROLL_SESSION_START = Number(localStorage.getItem('trollSessionStart') || Date.now());
+        localStorage.setItem('trollSessionStart', String(TROLL_SESSION_START));
+        let TROLL_COMMAND_COUNT = Number(sessionStorage.getItem('trollCommandCount') || 0);
+        let TROLL_ACTIVE_EVENTS = [];
+        let TROLL_WORLD_POLL_BUSY = false;
+
+        function fmtDuration(totalSeconds){
+            const s=Math.max(0,Math.floor(totalSeconds));
+            const h=String(Math.floor(s/3600)).padStart(2,'0');
+            const m=String(Math.floor((s%3600)/60)).padStart(2,'0');
+            const sec=String(s%60).padStart(2,'0');
+            return `${h}:${m}:${sec}`;
+        }
+
+        function setStat(id,value,cls=''){
+            const el=document.getElementById(id); if(!el) return;
+            el.textContent=value; el.className='stat-value'+(cls?' '+cls:'');
+        }
+
+        function renderStats(){
+            setStat('stat-commands', String(TROLL_COMMAND_COUNT));
+            setStat('stat-session', fmtDuration((Date.now()-TROLL_SESSION_START)/1000));
+            
+            const now=Date.now();
+            TROLL_ACTIVE_EVENTS=TROLL_ACTIVE_EVENTS.filter(e=>e.until>now);
+            setStat('stat-event-count', String(TROLL_ACTIVE_EVENTS.length), TROLL_ACTIVE_EVENTS.length?'warn':'good');
+            
+            const list=document.getElementById('stat-active-events');
+            if(list){
+                if(!TROLL_ACTIVE_EVENTS.length){
+                    list.innerHTML='<span class="no-events">Ожидание команд для логгирования...</span>';
+                }else{
+                    list.innerHTML=TROLL_ACTIVE_EVENTS.map(e=>{
+                        const cls=e.kind==='danger'?'danger':(e.kind==='warn'?'warn':'');
+                        return `<span class="event-chip ${cls}"><span>${e.name}</span><span class="evt-time">${Math.max(0,Math.ceil((e.until-now)/1000))}s</span></span>`;
+                    }).join('');
+                }
+            }
+        }
+
+        function trackLiveEvent(command){
+            const now=Date.now();
+            let duration=4, name='Аномалия', kind='warn';
+            let m=command.match(/effect\s+give\s+@(?:a|e\[[^\]]+\]|s)\s+(\S+)\s+(\d+(?:\.\d+)?)/i);
+            if(m){ duration=Math.min(120,Math.max(2,Number(m[2]))); name='Эффект: '+m[1].replace(/_/g,' '); kind=['blindness','darkness','levitation','nausea','slowness','mining_fatigue','hunger'].includes(m[1])?'warn':'good'; }
+            else if(/playsound/i.test(command)){duration=3; name='Аудио-атака'; kind='good';}
+            else if(/particle/i.test(command)){duration=4; name='Визуальная аномалия'; kind='good';}
+            else if(/summon\s+lightning|setblock.*lava|clear\s+@a/i.test(command)){duration=6; name='Опасное вмешательство'; kind='danger';}
+            else if(/summon\s+/i.test(command)){duration=12; name='Новая сущность'; kind='warn';}
+            else if(/title\s+@a/i.test(command)){duration=5; name='Системное сообщение'; kind='good';}
+            else return;
+            TROLL_ACTIVE_EVENTS.push({id:crypto.randomUUID?.()||String(Math.random()),name,kind,until:now+duration*1000});
+            if(TROLL_ACTIVE_EVENTS.length>12) TROLL_ACTIVE_EVENTS=TROLL_ACTIVE_EVENTS.slice(-12);
+            renderStats();
+        }
+
+        function updateOnlineUI(isOnline){
+            const online=document.getElementById('world-online-line');
+            const last=document.getElementById('world-last-update');
+            const state=document.getElementById('stat-world-state');
+            
+            if(!isOnline){
+                if(online) online.innerHTML='<span class="offline-pulse"></span>СВЯЗЬ С ИГРОЙ ПОТЕРЯНА';
+                setStat('stat-players','OFFLINE','danger');
+                if(state) state.textContent='SYSTEM // OFFLINE';
+            }else{
+                if(online) online.innerHTML=`<span class="online-pulse"></span>СОЕДИНЕНИЕ СТАБИЛЬНО`;
+                setStat('stat-players','ONLINE','good');
+                if(state) state.textContent='SYSTEM // CONNECTED';
+            }
+            
+            setStat('stat-last-death', Math.round(TROLL_HEAT) + '%', TROLL_HEAT > 70 ? 'danger' : (TROLL_HEAT > 40 ? 'warn' : 'good'));
+            
+            if(last) last.textContent='PING // '+new Date().toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+        }
+
+        async function queryGame(command){
+            const url=IP_ADDRESS+'/execute?cmd='+encodeURIComponent(command);
+            const res=await fetch(url,{method:'GET',headers:{'ngrok-skip-browser-warning':'true'}});
+            if(!res.ok) throw new Error('Query failed');
+            return await res.text();
+        }
+
+        async function giveMap(id) {
+            try {
+                const response = await fetch(`${IP_ADDRESS}/give-map?id=${id}`);
+                const text = await response.text();
+                console.log(text);
+            } catch (e) {
+                console.error("Ошибка выдачи карты:", e);
+            }
+        }
+
+        async function pollWorldStats(){
+            if(TROLL_WORLD_POLL_BUSY) return;
+            TROLL_WORLD_POLL_BUSY=true;
+            try{
+                // Отправляем безопасную команду просто для проверки связи
+                await queryGame('seed');
+                updateOnlineUI(true);
+            }catch(err){
+                updateOnlineUI(false);
+            }finally{
+                TROLL_WORLD_POLL_BUSY=false;
+                renderStats();
+            }
+        }
+        
+        renderStats();
+        pollWorldStats();
+        setInterval(pollWorldStats,5000);
+        setInterval(renderStats,1000);
+
+        /* --- ЛАБОРАТОРИЯ ХАОСА --- */
+        let TROLL_HEAT = Number(localStorage.getItem('trollHeat') || 0);
+        if(!Number.isFinite(TROLL_HEAT)) TROLL_HEAT = 0;
+
+        let TROLL_BOMB_TIMER = null;
+        let TROLL_EASTER_BUFFER = '';
+        let TROLL_TITLE_CLICKS = 0;
+
+        const LAB_EVENTS = [
+            {name:'КРИПЕР-КОМАР', cmd:'execute as @a at @s run summon creeper ~ ~ ~ {Fuse:80,ExplosionRadius:1}', kind:'warn'},
+            {name:'МАЛЕНЬКИЙ БУНТ', cmd:'effect give @a speed 5 2 true', kind:'good'},
+            {name:'ТЕМНОТА', cmd:'effect give @a darkness 5 0 true', kind:'warn'},
+            {name:'ФАЛЬШИВЫЙ ФИНИШ', cmd:'title @a title {"text":"YOU DIED","color":"red","bold":true}', kind:'warn'},
+            {name:'НЕОНОВЫЙ МИР', cmd:'execute as @a at @s run particle minecraft:end_rod ~ ~2 ~ 1 1 1 0.08 70 force', kind:'good'},
+            {name:'ЛУННЫЙ БУМ', cmd:'time set midnight', kind:'warn'},
+            {name:'ПРАЗДНИК', cmd:'execute as @a at @s run particle minecraft:firework ~ ~2 ~ 1 1 1 0.08 90 force', kind:'good'},
+            {name:'НЕВИДИМЫЙ ПРИВЕТ', cmd:'effect give @a invisibility 4 0 true', kind:'warn'},
+            {name:'БИП СИСТЕМЫ', cmd:'execute as @a at @s run playsound block.beacon.activate master @s ~ ~ ~ 8 1.5', kind:'good'},
+            {name:'ОПАСНЫЙ ПИНГ', cmd:'execute as @a at @s run playsound entity.elder_guardian.curse master @s ~ ~ ~ 8 1', kind:'warn'}
+        ];
+
+        function getHeatState(){
+            if(TROLL_HEAT >= 95) return {name:'BLACKOUT', cls:'blackout', text:'ALL COMMANDS LOCKED'};
+            if(TROLL_HEAT >= 85) return {name:'CRITICAL', cls:'critical', text:'GAMEPLAY ACTIONS LOCKED'};
+            if(TROLL_HEAT >= 70) return {name:'LOCKDOWN', cls:'lock', text:'HEAVY ACTIONS LOCKED'};
+            if(TROLL_HEAT >= 50) return {name:'ALERT', cls:'alert', text:'HIGH-RISK ACTIONS LOCKED'};
+            return {name:'NORMAL', cls:'normal', text:'SYSTEM READY'};
+        }
+
+        function setHeat(v){
+            TROLL_HEAT = Math.max(0, Math.min(100, Number(v) || 0));
+            localStorage.setItem('trollHeat', String(TROLL_HEAT));
+            const hv=document.getElementById('heat-value');
+            const hb=document.getElementById('heat-bar');
+            const hs=document.getElementById('heat-state');
+            const hc=document.getElementById('heat-cooldown');
+            const shown=Math.round(TROLL_HEAT);
+            if(hv) hv.textContent=shown+'%';
+            if(hb) hb.style.width=TROLL_HEAT+'%';
+            const state=getHeatState();
+            if(hs){ hs.textContent=state.name; hs.className='heat-state '+state.cls; }
+            if(hc) hc.textContent=state.text;
+            document.body.classList.toggle('heat-critical', TROLL_HEAT >= 85);
+        }
+        setHeat(TROLL_HEAT);
+
+        let lastHeatCool = performance.now();
+        setInterval(()=>{
+            const now = performance.now();
+            const dt = Math.max(0.25, Math.min(2.5, (now - lastHeatCool) / 1000));
+            lastHeatCool = now;
+            if(TROLL_HEAT <= 0) return;
+            let rate = 0.28;          
+            if(TROLL_HEAT >= 85) rate = 1.20;
+            else if(TROLL_HEAT >= 70) rate = 0.90;
+            else if(TROLL_HEAT >= 50) rate = 0.58;
+            setHeat(TROLL_HEAT - rate * dt);
+        }, 500);
+
+        function labPick(){ return LAB_EVENTS[Math.floor(Math.random()*LAB_EVENTS.length)]; }
+        function launchLabEvent(eventObj){
+            trollLog(`LAB // ${eventObj.name}`, eventObj.kind === 'warn' ? 'warn' : 'good');
+            sendCmd(eventObj.cmd);
+        }
+
+        function anomalyWheel(){
+            const names=LAB_EVENTS.map(x=>x.name);
+            let i=0, ticks=0;
+            openModal('РУЛЕТКА АНОМАЛИЙ', '<div class="roulette glitching" id="lab-roulette">SCAN...</div><div class="command-preview">Инициализация случайного протокола...</div>');
+            const box=document.getElementById('lab-roulette');
+            const timer=setInterval(()=>{
+                if(!box){clearInterval(timer);return;}
+                box.textContent=names[i++%names.length];
+                ticks++;
+                if(ticks>=24){
+                    clearInterval(timer);
+                    const winner=labPick();
+                    box.classList.remove('glitching');
+                    box.innerHTML=`<span class="winner">${winner.name}</span>`;
+                    setTimeout(()=>{ closeModal(); launchLabEvent(winner); }, 650);
+                }
+            }, 70);
+        }
+
+        function luckyBox(){
+            const roll=Math.random();
+            if(roll<0.4){
+                sendCmd('give @a golden_apple 1');
+                sendCmd('effect give @a regeneration 6 1 true');
+                showToast('🎁 JACKPOT: золотое яблоко');
+                trollLog('ЯЩИК: JACKPOT','good');
+            }else if(roll<0.72){
+                sendCmd('execute as @a at @s run playsound block.note_block.pling master @s ~ ~ ~ 8 0.7');
+                sendCmd('execute as @a at @s run particle minecraft:happy_villager ~ ~2 ~ 1 1 1 0.12 80 force');
+                showToast('✨ ЯЩИК: странный, но добрый подарок');
+                trollLog('ЯЩИК: позитивный результат','good');
+            }else{
+                launchLabEvent(labPick());
+                showToast('☠ ЯЩИК: ПРОКЛЯТИЕ');
+            }
+        }
+
+        function startTimeBomb(){
+            if(TROLL_BOMB_TIMER) return showToast('Бомба уже активна', true);
+            const ui=document.getElementById('timebomb-ui');
+            const val=document.getElementById('timebomb-value');
+            if(ui) ui.classList.add('active');
+            let n=5;
+            if(val) val.textContent=n;
+            trollLog('TIME BOMB // 5 секунд','warn');
+            TROLL_BOMB_TIMER=setInterval(()=>{
+                n--; if(val) val.textContent=n;
+                if(n<=0){
+                    clearInterval(TROLL_BOMB_TIMER);TROLL_BOMB_TIMER=null;
+                    if(ui) ui.classList.remove('active');
+                    const e=labPick();
+                    showToast('💣 BOOM // '+e.name);
+                    launchLabEvent(e);
+                    screenFlash('red');
+                }
+            },1000);
+        }
+        function cancelTimeBomb(){
+            if(TROLL_BOMB_TIMER){clearInterval(TROLL_BOMB_TIMER);TROLL_BOMB_TIMER=null;}
+            document.getElementById('timebomb-ui')?.classList.remove('active');
+            showToast('TIME BOMB обезврежена');
+            trollLog('TIME BOMB отменена','good');
+        }
+
+        function runCombo(count){
+            const pool=[...LAB_EVENTS].sort(()=>Math.random()-0.5).slice(0,count);
+            trollLog(`КОМБО-МАТРИЦА // ${count} фаз`,'warn');
+            pool.forEach((e,i)=>setTimeout(()=>launchLabEvent(e), i*700));
+            showToast(`🧩 COMBO-${count} запущено`);
+        }
+
+        function fakeCrash(){
+            screenFlash('red');
+            openModal('FATAL ERROR', `<div class="command-preview">TROLL_OS.exe\nSTATUS: CRITICAL\nERROR: 0xEXE_404\nTHREAD: CHAOS_MAIN\n\n[ SIMULATED CRASH ]\n[ RESTARTING... ]</div>`);
+            trollLog('ФАЛЬШИВЫЙ КРАШ // интерфейс перезапускается','warn');
+            setTimeout(()=>{ closeModal(); showToast('SYSTEM RESTORED // это была пасхалка'); },1800);
+        }
+        function fakeDisconnect(){
+            const st=document.querySelector('.status-indicator');
+            const old=st?st.innerHTML:'';
+            if(st) st.innerHTML='<div class="dot" style="background:#ff304f;box-shadow:0 0 12px #ff304f"></div> CONNECTION LOST';
+            showToast('📡 Соединение потеряно...');
+            setTimeout(()=>{
+                if(st) st.innerHTML=old;
+                showToast('📡 CONNECTION RESTORED');
+                trollLog('ФАЛЬШИВЫЙ DISCONNECT завершён','good');
+            },1400);
+        }
+        function surveillancePrank(){
+            sendCmd('execute as @a at @s run particle minecraft:sculk_soul ~ ~2 ~ 0.8 1 0.8 0.02 60 force');
+            sendCmd('execute as @a at @s run playsound entity.enderman.stare master @s ~ ~ ~ 8 0.65');
+            sendCmd('title @a title {"text":"Я ВИЖУ ТЕБЯ","color":"dark_red","bold":true}');
+            trollLog('РЕЖИМ СЛЕЖКИ','warn');
+        }
+        function falseAlarm(){
+            sendCmd('execute as @a at @s run playsound block.bell.resonate master @s ~ ~ ~ 10 0.7');
+            sendCmd('title @a title {"text":"ТРЕВОГА","color":"red","bold":true}');
+            setTimeout(()=>sendCmd('title @a subtitle {"text":"Угроза не обнаружена.","color":"gray"}'),550);
+            trollLog('ФАЛЬШИВАЯ ТРЕВОГА','warn');
+        }
+
+        function secretHint(){
+            openModal('SECRET HUNT', `<div class="command-preview">Улики:\n\n• набери EXE\n• попробуй KONAMI ↑ ↑ ↓ ↓\n• кликни по TROLL_OS несколько раз\n• введи 1337\n• попробуй слово MATRIX\n• иногда система сама оставляет странные сообщения...</div>`);
+        }
+
+        document.addEventListener('keydown',(e)=>{
+            const tag=(e.target?.tagName||'').toLowerCase();
+            if(['input','textarea','select'].includes(tag)) return;
+            TROLL_EASTER_BUFFER += e.key.toLowerCase();
+            if(TROLL_EASTER_BUFFER.length>12) TROLL_EASTER_BUFFER=TROLL_EASTER_BUFFER.slice(-12);
+            if(TROLL_EASTER_BUFFER.includes('1337')){
+                TROLL_EASTER_BUFFER='';
+                showToast('☠ 1337 MODE: ACCESS GRANTED');
+                trollLog('SECRET // 1337 MODE','warn');
+                screenFlash(); setHeat(100);
+            }
+            if(TROLL_EASTER_BUFFER.includes('matrix')){
+                TROLL_EASTER_BUFFER='';
+                trollLog('SECRET // MATRIX OVERRIDE','warn');
+                showToast('🟢 MATRIX OVERRIDE');
+                document.body.classList.add('screen-shake');
+                setTimeout(()=>document.body.classList.remove('screen-shake'),500);
+            }
+        });
+
+        // --- ПАСХАЛКА EXEPLAYER ---
+        let secretCode = "";
+        document.addEventListener('keydown', (e) => {
+            secretCode += e.key.toLowerCase();
+            if (secretCode.length > 5) secretCode = secretCode.slice(-5);
+            if (secretCode.includes("exe")) {
+                const container = document.getElementById("toast-container");
+                const toast = document.createElement("div");
+                toast.className = "toast easter-egg";
+                toast.innerHTML = `⚠️ ПРОТОКОЛ ${TROLL_USER?.name || "USER"} АКТИВИРОВАН ⚠️`;
+                container.appendChild(toast);
+                setTimeout(() => toast.remove(), 6000);
+                
+                sendCmd("execute as @a at @s run summon lightning_bolt ~ ~ ~");
+                sendCmd(`title @a title ${JSON.stringify({text:`${TROLL_USER?.name || "USER"} следит за тобой...`,color:"red",bold:true})}`);
+                secretCode = ""; 
+            }
+        });
+
+        // --- БАЗОВАЯ ОТПРАВКА КОМАНД И УВЕДОМЛЕНИЯ ---
+        function showToast(msg, isError = false) {
+            const container = document.getElementById("toast-container");
+            const toast = document.createElement("div");
+            toast.className = "toast" + (isError ? " error" : "");
+            toast.innerHTML = (isError ? "❌ " : "⚡ ") + msg;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        // Чистая функция отправки на сервер
+        function baseSendCmd(command) {
+            TROLL_COMMAND_COUNT++;
+            sessionStorage.setItem('trollCommandCount', String(TROLL_COMMAND_COUNT));
+            const totalKey='trollPurgeCommandTotal_'+TROLL_UID;
+            const total=Number(localStorage.getItem(totalKey)||0)+1;
+            localStorage.setItem(totalKey,String(total));
+            const gateProfile=getHeatCost(command);
+            updatePurgeQuestFromActivity(command, gateProfile);
+            
+            // Логируем эффект для системного монитора
+            trackLiveEvent(command); 
+            
+            const url = IP_ADDRESS + "/execute?cmd=" + encodeURIComponent(command);
+            return fetch(url, { method: "GET", headers: { "ngrok-skip-browser-warning": "true" } })
+            .then(res => { if(!res.ok) throw new Error("Connection failed"); return res.text(); })
+            .then(() => { showToast("Команда выполнена"); renderStats(); })
+            .catch(err => { showToast("Ошибка связи с сервером", true); renderStats(); });
+        }
+
+        // --- ПРОВЕРКИ HEAT И ФОРМИРОВАНИЕ БРОНИ ---
+        function giveFragileArmor() {
+            const isModern = document.getElementById('mc-version').value === "modern";
+            let cmds = [];
+
+            if (isModern) {
+                cmds.push("item replace entity @a armor.head with diamond_helmet[damage=362]");
+                cmds.push("item replace entity @a armor.chest with diamond_chestplate[damage=527]");
+                cmds.push("item replace entity @a armor.legs with diamond_leggings[damage=494]");
+                cmds.push("item replace entity @a armor.feet with diamond_boots[damage=428]");
+            } else {
+                cmds.push("item replace entity @a armor.head with diamond_helmet{Damage:362}");
+                cmds.push("item replace entity @a armor.chest with diamond_chestplate{Damage:527}");
+                cmds.push("item replace entity @a armor.legs with diamond_leggings{Damage:494}");
+                cmds.push("item replace entity @a armor.feet with diamond_boots{Damage:428}");
+            }
+
+            cmds.forEach(cmd => sendCmd(cmd));
+        }
+
+        function giveCustomItem() {
+            const id = document.getElementById('item-id').value;
+            let count = parseInt(document.getElementById('item-count').value) || 1;
+            const name = document.getElementById('item-name').value.trim();
+            const enchant = document.getElementById('item-enchant').value;
+            const isModern = document.getElementById('mc-version').value === "modern";
+
+            if (count > 64) count = 64;
+            let cmd = "";
+
+            if (isModern) {
+                let components = [];
+                if (name !== "") components.push(`custom_name='"§b${name}"'`);
+                
+                if (enchant === "knockback") components.push(`enchantments={knockback:25}`);
+                if (enchant === "sharpness") components.push(`enchantments={sharpness:25}`);
+                if (enchant === "efficiency") components.push(`enchantments={efficiency:25}`);
+                if (enchant === "fortune") components.push(`enchantments={fortune:25}`);
+                if (enchant === "protection") components.push(`enchantments={protection:25}`);
+                if (enchant === "fire_aspect") components.push(`enchantments={fire_aspect:10}`);
+                if (enchant === "binding") components.push(`enchantments={binding_curse:1}`);
+                if (enchant === "vanishing") components.push(`enchantments={vanishing_curse:1}`);
+
+                const compString = components.length > 0 ? `[${components.join(",")}]` : "";
+                cmd = `give @a ${id}${compString} ${count}`;
+            } else {
+                let nbtTags = [];
+                if (name !== "") nbtTags.push(`display:{Name:'"§b${name}"'}`); 
+                
+                if (enchant === "knockback") nbtTags.push(`Enchantments:[{id:"minecraft:knockback",lvl:25s}]`);
+                if (enchant === "sharpness") nbtTags.push(`Enchantments:[{id:"minecraft:sharpness",lvl:25s}]`);
+                if (enchant === "efficiency") nbtTags.push(`Enchantments:[{id:"minecraft:efficiency",lvl:25s}]`);
+                if (enchant === "fortune") nbtTags.push(`Enchantments:[{id:"minecraft:fortune",lvl:25s}]`);
+                if (enchant === "protection") nbtTags.push(`Enchantments:[{id:"minecraft:protection",lvl:25s}]`);
+                if (enchant === "fire_aspect") nbtTags.push(`Enchantments:[{id:"minecraft:fire_aspect",lvl:10s}]`);
+                if (enchant === "binding") nbtTags.push(`Enchantments:[{id:"minecraft:binding_curse",lvl:1s}]`);
+                if (enchant === "vanishing") nbtTags.push(`Enchantments:[{id:"minecraft:vanishing_curse",lvl:1s}]`);
+
+                const nbtString = nbtTags.length > 0 ? `{${nbtTags.join(",")}}` : "";
+                cmd = `give @a ${id}${nbtString} ${count}`;
+            }
+            sendCmd(cmd);
+        }
+
+        function spawnAdvancedMob() {
+            const type = document.getElementById('adv-mob-type').value;
+            let count = parseInt(document.getElementById('adv-mob-count').value) || 1;
+            const name = document.getElementById('adv-mob-name').value.trim();
+            const effect = document.getElementById('adv-mob-effect').value;
+            const isGlowing = document.getElementById('adv-mob-glowing').checked;
+            const isSilent = document.getElementById('adv-mob-silent').checked;
+
+            if (count > 20) count = 20; 
+            const batchTag = "troll_" + Date.now();
+            let nbtProps = [`Tags:["${batchTag}"]`]; 
+            
+            if (name !== "") nbtProps.push(`CustomName:'"§c${name}"'`);
+            if (isGlowing) nbtProps.push("Glowing:1b");
+            if (isSilent)  nbtProps.push("Silent:1b");
+
+            if (type === "bee") nbtProps.push("Anger:9999");
+
+            const nbtString = `{${nbtProps.join(",")}}`;
+            // Спавн также привязан к игрокам, чтобы мобы появлялись прямо перед ними!
+            const spawnCommand = `execute as @a at @s run summon ${type} ~ ~ ~ ${nbtString}`;
+
+            let currentSpawn = 0;
+            function spawnNext() {
+                if (currentSpawn < count) {
+                    sendCmd(spawnCommand);
+                    currentSpawn++;
+                    setTimeout(spawnNext, 100); 
+                } else {
+                    if (effect !== "none") {
+                        setTimeout(() => sendCmd(`execute at @a run effect give @e[tag=${batchTag}] ${effect} 9999 2 true`), 300);
+                    }
+                    showToast(`Заспавнено: ${count} шт. (${type})`);
+                }
+            }
+            spawnNext();
+        }
+
+        // --- АВТОРСКИЕ ЭФФЕКТЫ И HEAT ---
+        let TROLL_POWER = Number(localStorage.getItem("trollPower") || 73);
+        let TROLL_SAFE_MODE = localStorage.getItem("trollSafeMode") !== "0";
+        let TROLL_FX = localStorage.getItem("trollFx") !== "0";
+        let TROLL_LAST_ACTION = 0;
+        let TROLL_LAST_ACTION_COMMAND = "";
+
+        const SAFE_COMMANDS = [
+            { label:"ШИПЕНИЕ КРИПЕРА", cmd:"execute as @a at @s run playsound entity.creeper.primed master @s ~ ~ ~ 10 1", kind:"sound" },
+            { label:"ПУЛЬС ВАРДЕНА", cmd:"execute as @a at @s run playsound entity.warden.heartbeat master @s ~ ~ ~ 10 1", kind:"sound" },
+            { label:"КРИК ЭНДЕРМЕНА", cmd:"execute as @a at @s run playsound entity.enderman.stare master @s ~ ~ ~ 10 1", kind:"sound" },
+            { label:"СЛЕПОТА", cmd:"effect give @a blindness 7 1 true", kind:"effect" },
+            { label:"ТОШНОТА", cmd:"effect give @a nausea 7 1 true", kind:"effect" },
+            { label:"ГОЛОД", cmd:"effect give @a hunger 15 2 true", kind:"effect" },
+            { label:"ПАУТИНА", cmd:"execute as @a at @s run setblock ~ ~ ~ cobweb", kind:"world" },
+            { label:"ЛУНА", cmd:"time set night", kind:"world" },
+            { label:"ГРОЗА", cmd:"weather thunder", kind:"world" },
+            { label:"ДЕНЬ", cmd:"time set day", kind:"world" }
+        ];
+
+        function trollLog(message, level="good"){
+            const el = document.getElementById("event-log");
+            const div = document.createElement("div");
+            div.className = "log-line " + level;
+            const t = new Date().toLocaleTimeString("ru-RU", {hour12:false});
+            div.textContent = `[${t}] ${message}`;
+            el.prepend(div);
+            while(el.children.length > 15) el.lastElementChild.remove();
+        }
+
+        function setPower(v){
+            TROLL_POWER = Math.max(0, Math.min(100, Math.round(v)));
+            localStorage.setItem("trollPower", String(TROLL_POWER));
+            const pv = document.getElementById("power-value");
+            const pb = document.getElementById("power-bar");
+            if(pv) pv.textContent = `${TROLL_POWER}%`;
+            if(pb) pb.style.width = `${TROLL_POWER}%`;
+        }
+        setPower(TROLL_POWER);
+
+        function getHeatCost(command){
+            const c = String(command).toLowerCase();
+            if(/\bclear @a\b|lava|summon lightning_bolt|summon creeper.*powered|\btnt\b|spreadplayers/.test(c)) return {cost:10, danger:4, tag:'EXTREME'};
+            if(/\beffect give @a (blindness|darkness|nausea|levitation|hunger|mining_fatigue|slowness|weakness|strength|resistance)/.test(c)) return {cost:4, danger:3, tag:'HEAVY'};
+            if(/\b(tp @a|execute .*\btp @s|setblock .* (lava|cobweb|water|powder_snow|slime_block)|give @a (poisonous_potato|dirt 4096)|summon (warden|wither|ravager|ghast))/.test(c)) return {cost:6, danger:3, tag:'HEAVY'};
+            if(/\bsummon (creeper|bat|chicken|firework_rocket)|item replace entity @a|give @a/.test(c)) return {cost:3, danger:2, tag:'MEDIUM'};
+            if(/\bplaysound\b/.test(c)) return {cost:1, danger:1, tag:'SOUND'};
+            if(/\bparticle\b|\btitle\b|\btime set\b|\bweather\b/.test(c)) return {cost:1, danger:1, tag:'LIGHT'};
+            return {cost:2, danger:2, tag:'NORMAL'};
+        }
+
+        const HEAT_META = {
+            LIGHT:   {ru:'LIGHT / ЛЁГКИЙ',      desc:'Почти безопасный эффект. В основном визуальный или атмосферный.', icon:'🟢'},
+            SOUND:   {ru:'SOUND / ЗВУКОВОЙ',    desc:'Звуковая атака без серьёзного влияния на игровой процесс.', icon:'🔊'},
+            NORMAL:  {ru:'NORMAL / ОБЫЧНЫЙ',    desc:'Стандартное вмешательство. Слегка повышает HEAT.', icon:'🟡'},
+            MEDIUM:  {ru:'MEDIUM / СРЕДНИЙ',    desc:'Заметно влияет на игрока, мобов или инвентарь.', icon:'🟠'},
+            HEAVY:   {ru:'HEAVY / ТЯЖЁЛЫЙ',     desc:'Сильное вмешательство в игровой процесс. Быстро повышает HEAT.', icon:'🔴'},
+            EXTREME: {ru:'EXTREME / ЭКСТРЕМАЛЬНЫЙ', desc:'Критически опасный эффект. Сильно повышает HEAT и первым попадает под блокировку.', icon:'☢️'}
+        };
+
+        const HEAT_ACTION_IDS = new Set([
+            'btn-rng','btn-last','btn-heal','btn-rain','btn-nightmare','btn-nuke','btn-exe',
+            'btn-anomaly-wheel','btn-lucky-box','btn-timebomb','btn-combo3','btn-combo5',
+            'btn-doppel','btn-false-alarm','btn-rng2','btn-nightmare2','btn-chaos2','btn-exe2'
+        ]);
+
+        function profileFromElement(el){
+            const onclick = (el.getAttribute('onclick') || '').replace(/&quot;/g,'"');
+            const label = (el.textContent || '').trim().toLowerCase();
+            const id = el.id || '';
+
+            const hasGameHandler = HEAT_ACTION_IDS.has(id) ||
+                /\bsendCmd\s*\(/.test(onclick) ||
+                /\bgiveFragileArmor\s*\(/.test(onclick);
+
+            if(!hasGameHandler) return null;
+
+            let source = '';
+            const m = onclick.match(/sendCmd\((['\"])(.*?)\1\)/);
+            if(m) source = m[2];
+            let p = source ? getHeatCost(source) : null;
+            if(!p){
+                if(/exe protocol|exe burst|полное уничтожение|nuke|nightmare|chaos|бомб|молни|лава/.test(label)) p={cost:10,danger:4,tag:'EXTREME'};
+                else if(/наблюдател|шпион|заряженный|фейерверк|желe|снeжн|катапульт|телепорт|антиграв|разброс|дэш|разворот/.test(label)) p={cost:6,danger:3,tag:'HEAVY'};
+                else if(/rng|рулет|комбо|кошмар|хаос|система|не оборачивайся|аура|портал|фонтан|конфетти|дым|романтика/.test(label)) p={cost:2,danger:2,tag:'NORMAL'};
+                else if(/пульс|шипение|tnt|крик|гаст|визер|гром|xp|левелап|наковаль|мыши|звук|бип|ping/.test(label)) p={cost:1,danger:1,tag:'SOUND'};
+                else p={cost:3,danger:2,tag:'MEDIUM'};
+            }
+            return p;
+        }
+
+        function enrichTooltips(){
+            document.querySelectorAll('button[data-tooltip]').forEach(el=>{
+                if(el.dataset.heatTooltipDone === '1') return;
+                const p=profileFromElement(el);
+                if(!p) return;
+                const meta=HEAT_META[p.tag] || HEAT_META.NORMAL;
+                el.dataset.tooltip = `${el.dataset.tooltip}\n\n${meta.icon} ${meta.ru}  •  HEAT +${p.cost}%\n${meta.desc}`;
+                el.dataset.heatTooltipDone='1';
+            });
+        }
+
+        function heatGate(command){
+            const p=getHeatCost(command);
+            if(TROLL_HEAT < 50) return {ok:true, profile:p};
+            if(TROLL_HEAT >= 95) return {ok:false, profile:p, reason:'BLACKOUT: TROLL_OS полностью заблокировал команды. Подожди, пока HEAT упадёт.'};
+            if(TROLL_HEAT >= 85 && p.danger >= 2) return {ok:false, profile:p, reason:`CRITICAL: ${p.tag}-команды заблокированы при HEAT ${TROLL_HEAT}%.`};
+            if(TROLL_HEAT >= 70 && p.danger >= 3) return {ok:false, profile:p, reason:`LOCKDOWN: тяжёлые эффекты заблокированы при HEAT ${TROLL_HEAT}%.`};
+            if(TROLL_HEAT >= 50 && p.danger >= 4) return {ok:false, profile:p, reason:`ALERT: экстремальный эффект временно недоступен при HEAT ${TROLL_HEAT}%.`};
+            return {ok:true, profile:p};
+        }
+
+        function ventHeat(amount=20){
+            setHeat(TROLL_HEAT - Math.abs(amount));
+            showToast(`❄ HEAT снижён до ${TROLL_HEAT}%`);
+            trollLog(`COOLDOWN // HEAT -${Math.abs(amount)}`,'good');
+        }
+
+        // Перехват команды: проверяем HEAT, антиспам, затем отправляем в baseSendCmd
+        sendCmd = function(command){
+            const gate = heatGate(command);
+            if(!gate.ok){
+                showToast('⛔ '+gate.reason, true);
+                trollLog(`HEAT LOCK // ${gate.profile.tag} // ${TROLL_HEAT}%`, 'warn');
+                screenFlash('red');
+                return Promise.resolve(false);
+            }
+
+            if(TROLL_SAFE_MODE){
+                const now = Date.now();
+                if(command === TROLL_LAST_ACTION_COMMAND && now - TROLL_LAST_ACTION < 90){
+                    showToast("Слишком быстрый повтор", true);
+                    return Promise.resolve(false);
+                }
+                TROLL_LAST_ACTION = now;
+                TROLL_LAST_ACTION_COMMAND = command;
+            }
+
+            TROLL_LAST_COMMAND = command;
+            localStorage.setItem("trollLastCommand", command);
+            setPower(TROLL_POWER + (Math.random() * 4 - 1));
+            setHeat(TROLL_HEAT + gate.profile.cost);
+            updatePurgeQuestFromActivity(command, gate.profile);
+
+            if(TROLL_FX) screenFlash(gate.profile.danger >= 4 ? "red" : "");
+
+            trollLog(`${gate.profile.tag} +${gate.profile.cost} HEAT // ` + (command.length > 66 ? command.slice(0,63)+"..." : command));
+            return baseSendCmd(command);
+        };
+
+        function burstAt(x, y, danger=false){
+            if(!TROLL_FX) return;
+            const layer = document.getElementById("fx-layer");
+            for(let i=0;i<12;i++){
+                const p = document.createElement("span");
+                p.className = "click-particle";
+                p.style.left = x + "px";
+                p.style.top = y + "px";
+                p.style.setProperty("--dx", `${(Math.random()-0.5)*150}px`);
+                p.style.setProperty("--dy", `${(Math.random()-0.5)*150}px`);
+                p.style.background = danger ? "#ff3c55" : "#00ffaa";
+                p.style.boxShadow = `0 0 10px ${danger ? "#ff3c55" : "#00ffaa"}`;
+                layer.appendChild(p);
+                setTimeout(()=>p.remove(), 650);
+            }
+        }
+
+        function screenFlash(kind=""){
+            const f = document.createElement("div");
+            f.className = "screen-flash" + (kind ? " red" : "");
+            document.body.appendChild(f);
+            if(kind) document.body.classList.add("screen-shake");
+            setTimeout(()=>f.remove(), 220);
+            if(kind) setTimeout(()=>document.body.classList.remove("screen-shake"), 280);
+        }
+
+        document.addEventListener("click", (e)=>{
+            const btn = e.target.closest(".btn, .tool-chip");
+            if(btn){
+                burstAt(e.clientX, e.clientY, btn.classList.contains("danger") || btn.classList.contains("hot"));
+            }
+        });
+
+        setInterval(()=>{
+            const drift = (Math.random()-0.42)*3.5;
+            setPower(TROLL_POWER + drift);
+        }, 1800);
+
+        function localToggle(id, initialOn, key){
+            const el = document.getElementById(id);
+            if(!el) return;
+            el.classList.toggle("on", initialOn);
+            el.textContent = initialOn ? "ON" : "OFF";
+            el.addEventListener("click", ()=>{
+                const on = !el.classList.contains("on");
+                el.classList.toggle("on", on);
+                el.textContent = on ? "ON" : "OFF";
+                localStorage.setItem(key, on ? "1" : "0");
+                if(id==="safe-toggle") TROLL_SAFE_MODE = on;
+                if(id==="fx-toggle") TROLL_FX = on;
+                trollLog(`${id==="safe-toggle" ? "Антиспам" : "FX"}: ${on ? "ON" : "OFF"}`, "warn");
+            });
+        }
+        localToggle("safe-toggle", TROLL_SAFE_MODE, "trollSafeMode");
+        localToggle("fx-toggle", TROLL_FX, "trollFx");
+        let HEAT_VENT_UNLOCKED = sessionStorage.getItem("trollHeatVentUnlocked") === "1";
+
+        function updateHeatVentButton(){
+            const btn = document.getElementById("btn-vent-heat");
+            if(!btn) return;
+            if(HEAT_VENT_UNLOCKED){
+                btn.classList.add("unlocked");
+                btn.textContent = "❄ СБРОС HEAT -20 • UNLOCKED";
+                btn.dataset.tooltip = "Доступ разрешён. Нажмите, чтобы снизить HEAT на 20%. Работает только локально и не отправляет команды в Minecraft.";
+            }else{
+                btn.classList.remove("unlocked");
+                btn.textContent = "🔒 СБРОС HEAT • LOCKED";
+                btn.dataset.tooltip = "🔒 Системная функция защищена. Для доступа требуется пароль в консоли TROLL_OS.";
+            }
+        }
+
+        function requestHeatVentAccess(){
+            if(HEAT_VENT_UNLOCKED){
+                ventHeat(20);
+                return;
+            }
+            openModal("HEAT VENT // ROOT CONSOLE", `
+                <div class="heat-console">
+                    <div class="console-line">[ TROLL_OS SECURITY CONSOLE ]</div>
+                    <div><span class="prompt">root@troll_os:~$</span> request --heat-vent-access</div>
+                    <div style="margin-top:10px;color:#aaa">ACCESS LEVEL: ROOT
+                    <br>PROTECTED MODULE: THERMAL REGULATOR</div>
+                    <input id="heat-password" type="password" autocomplete="off" placeholder="Введите пароль...">
+                    <button class="btn" id="heat-unlock-submit">РАЗБЛОКИРОВАТЬ</button>
+                    <div class="console-status" id="heat-console-status">Ожидание авторизации...</div>
+                </div>`);
+            const input=document.getElementById("heat-password");
+            const submit=document.getElementById("heat-unlock-submit");
+            const status=document.getElementById("heat-console-status");
+            const unlock=()=>{
+                if(!input || !status) return;
+                if(input.value === "exenyan"){
+                    HEAT_VENT_UNLOCKED=true;
+                    sessionStorage.setItem("trollHeatVentUnlocked","1");
+                    status.className="console-status success";
+                    status.textContent="ACCESS GRANTED // THERMAL REGULATOR ONLINE";
+                    updateHeatVentButton();
+                    showToast("🔓 HEAT VENT разблокирован");
+                    trollLog("SECURITY // HEAT VENT ACCESS GRANTED","good");
+                    setTimeout(closeModal,700);
+                }else{
+                    status.className="console-status error";
+                    status.textContent="ACCESS DENIED // INVALID PASSWORD";
+                    input.value="";
+                    input.focus();
+                    screenFlash("red");
+                    trollLog("SECURITY // HEAT VENT ACCESS DENIED","warn");
+                }
+            };
+            submit?.addEventListener("click",unlock);
+            input?.addEventListener("keydown",e=>{ if(e.key === "Enter") unlock(); });
+            setTimeout(()=>input?.focus(),80);
+        }
+
+        updateHeatVentButton();
+        document.getElementById("btn-vent-heat")?.addEventListener("click", requestHeatVentAccess);
+
+        function runRandomTroll(){
+            const pick = SAFE_COMMANDS[Math.floor(Math.random()*SAFE_COMMANDS.length)];
+            showToast(`🎲 RNG: ${pick.label}`);
+            trollLog(`RNG -> ${pick.label}`, "warn");
+            sendCmd(pick.cmd);
+        }
+
+        function repeatLast(){
+            const cmd = TROLL_LAST_COMMAND || localStorage.getItem("trollLastCommand");
+            if(!cmd){
+                showToast("Истории команд пока нет", true);
+                return;
+            }
+            showToast("↩ Повтор последней команды");
+            sendCmd(cmd);
+        }
+
+        function nightmare(){
+            const sequence = [
+                "execute as @a at @s run playsound entity.warden.heartbeat master @s ~ ~ ~ 10 1",
+                "effect give @a darkness 4 1 true",
+                "effect give @a nausea 5 1 true",
+                "execute as @a at @s run setblock ~ ~ ~ cobweb"
+            ];
+            trollLog("МИНИ-КОШМАР: запуск цепочки", "warn");
+            sequence.forEach((cmd,i)=>setTimeout(()=>sendCmd(cmd), i*550));
+            showToast("☠ МИНИ-КОШМАР АКТИВИРОВАН");
+        }
+
+        function chaosCarousel(){
+            const sequence = [
+                "execute as @a at @s run playsound entity.creeper.primed master @s ~ ~ ~ 10 1",
+                "effect give @a speed 4 2 true",
+                "effect give @a slowness 2 3 true",
+                "execute as @a at @s run playsound entity.enderman.stare master @s ~ ~ ~ 10 1",
+                "time set night",
+                "weather thunder",
+                "effect give @a jump_boost 4 3 true",
+                "effect give @a blindness 2 1 true"
+            ];
+            trollLog("КАРУСЕЛЬ ХАОСА: 8 фаз", "warn");
+            sequence.forEach((cmd,i)=>setTimeout(()=>sendCmd(cmd), i*650));
+            showToast("💥 КАРУСЕЛЬ ХАОСА ЗАПУЩЕНА");
+        }
+
+        function lottRain(){
+            const cmds = [
+                "give @a bread 4",
+                "give @a torch 16",
+                "give @a cobblestone 32",
+                "give @a stick 8"
+            ];
+            cmds.forEach((cmd,i)=>setTimeout(()=>sendCmd(cmd), i*180));
+            showToast("🎁 ЛУТ-ДОЖДЬ: ПОЛЕЗНОСТЬ 110%");
+        }
+
+        function autoHeal(){
+            sendCmd("effect clear @a");
+            sendCmd("effect give @a regeneration 8 4 true");
+            sendCmd("effect give @a resistance 8 1 true");
+            showToast("♥ ВСЕ ИСЦЕЛЕНЫ");
+        }
+
+        function openModal(title, htmlContent){
+            document.getElementById("modal-title").textContent = title;
+            document.getElementById("modal-content").innerHTML = htmlContent;
+            document.getElementById("modal-backdrop").classList.add("open");
+        }
+        function closeModal(){
+            document.getElementById("modal-backdrop").classList.remove("open");
+        }
+
+        document.getElementById("modal-close").addEventListener("click", closeModal);
+        document.getElementById("modal-backdrop").addEventListener("click",(e)=>{
+            if(e.target.id==="modal-backdrop") closeModal();
+        });
+
+        document.getElementById('btn-anomaly-wheel')?.addEventListener('click', anomalyWheel);
+        document.getElementById('btn-lucky-box')?.addEventListener('click', luckyBox);
+        document.getElementById('btn-timebomb')?.addEventListener('click', startTimeBomb);
+        document.getElementById('btn-timebomb-cancel')?.addEventListener('click', cancelTimeBomb);
+        document.getElementById('btn-combo3')?.addEventListener('click', ()=>runCombo(3));
+        document.getElementById('btn-combo5')?.addEventListener('click', ()=>runCombo(5));
+        document.getElementById('btn-fake-crash')?.addEventListener('click', fakeCrash);
+        document.getElementById('btn-fake-disconnect')?.addEventListener('click', fakeDisconnect);
+        document.getElementById('btn-doppel')?.addEventListener('click', surveillancePrank);
+        document.getElementById('btn-false-alarm')?.addEventListener('click', falseAlarm);
+        document.getElementById('btn-secret-hunt')?.addEventListener('click', secretHint);
+
+        const trollTitle=document.querySelector('.sys-title');
+        trollTitle?.addEventListener('click',()=>{
+            TROLL_TITLE_CLICKS++;
+            if(TROLL_TITLE_CLICKS>=7){
+                TROLL_TITLE_CLICKS=0;
+                showToast('👁 HIDDEN ROOT PANEL UNLOCKED');
+                trollLog('SECRET // ROOT PANEL','warn');
+                openModal('ROOT ACCESS', `<div class="command-preview">UID: ${escapeHtml(TROLL_UID)}\nUSER: ${escapeHtml(TROLL_USER?.name || 'USER')}\nACCESS: ROOT\nPORT: 666\nSTATUS: UNAUTHORIZED\n\n...шутка. Но система тебя запомнила.</div>`);
+            }
+        });
+
+
+        // --- СИСТЕМА РАНГОВ ---
+        const RANKS = [
+            {id:1,name:'НОВОБРАНЕЦ',need:'Первый вход в TROLL_OS',check:()=>true,effect:'📡 SIGNAL PING',kind:'protocol',run:()=>rankProtocol('SIGNAL PING',["title @a actionbar {\"text\":\"[ TROLL_OS ] SIGNAL DETECTED\",\"color\":\"aqua\",\"bold\":true}","particle minecraft:end_rod ~ ~1 ~ 0.4 0.6 0.4 0.02 18","playsound block.note_block.pling master @a ~ ~ ~ 1 1.8"])},
+            {id:2,name:'ТРОЛЛЬ',need:'Отправить 10 команд',check:()=>Number(localStorage.getItem('trollPurgeCommandTotal_'+TROLL_UID)||0)>=10,effect:'🧲 ENTITY MAGNET',kind:'protocol',run:()=>rankProtocol('ENTITY MAGNET',["execute at @a run summon marker ~ ~ ~ {Tags:[\"troll_rank_magnet\"]}","execute at @a run particle minecraft:reverse_portal ~ ~1 ~ 0.7 0.9 0.7 0.05 35","execute at @a run playsound entity.enderman.teleport master @a ~ ~ ~ 0.8 0.7"])},
+            {id:3,name:'АГЕНТ ХАОСА',need:'Использовать 5 разных команд',check:()=>getPurgeQuest().unique.length>=5,effect:'🌀 CHAOS BLOOM',kind:'protocol',run:()=>rankProtocol('CHAOS BLOOM',["execute at @a run particle minecraft:portal ~ ~1 ~ 1 1.2 1 0.2 80","execute at @a run particle minecraft:enchant ~ ~1 ~ 0.8 1 0.8 0.5 35","effect give @a speed 6 2 true","playsound block.beacon.activate master @a ~ ~ ~ 1 1.4"])},
+            {id:4,name:'АНОМАЛИЯ',need:'Достичь HEAT 50%',check:()=>getPurgeQuest().peakHeat>=50,effect:'🌑 BLACK SUN',kind:'protocol',run:()=>rankProtocol('BLACK SUN',["time set midnight","weather thunder","effect give @a darkness 7 0 true","title @a title {\"text\":\"BLACK SUN\",\"color\":\"dark_purple\",\"bold\":true}"])},
+            {id:5,name:'ОПЕРАТОР',need:'Посетить TROLL_OS 3 раза',check:()=>Number(TROLL_USER?.visits||0)>=3,effect:'🛰 ORBITAL DROP',kind:'protocol',run:()=>rankProtocol('ORBITAL DROP',["execute at @a run summon falling_block ~ ~12 ~ {BlockState:{Name:\"minecraft:obsidian\"},Time:1,DropItem:0}","execute at @a run particle minecraft:smoke ~ ~2 ~ 0.4 1 0.4 0.02 25","execute at @a run playsound entity.firework_rocket.launch master @a ~ ~ ~ 0.7 0.6"])},
+            {id:6,name:'ПСИХОПАТ',need:'Достичь HEAT 70%',check:()=>getPurgeQuest().peakHeat>=70,effect:'👁️ HUNT MODE',kind:'protocol',run:()=>rankProtocol('HUNT MODE',["execute at @a run summon armor_stand ~ ~ ~ {Invisible:1b,NoGravity:1b,Marker:1b,CustomName:'\"§cWATCHER\"',CustomNameVisible:1b,Tags:[\"troll_watcher\"]}","execute at @a run effect give @a glowing 8 0 true","execute at @a run playsound entity.warden.heartbeat master @a ~ ~ ~ 2 0.6"])},
+            {id:7,name:'ВЕРШИТЕЛЬ',need:'Использовать 4 класса эффектов',check:()=>getPurgeQuest().classes.length>=4,effect:'🌪️ GRAVITY WELL',kind:'protocol',run:()=>rankProtocol('GRAVITY WELL',["execute at @a run summon area_effect_cloud ~ ~ ~ {Duration:80,Radius:6f,Particle:\"reverse_portal\",Tags:[\"troll_gravity\"]}","effect give @a levitation 4 1 true","execute at @a run particle minecraft:poof ~ ~1 ~ 1 1 1 0.03 50"])},
+            {id:8,name:'АРХИТЕКТОР ХАОСА',need:'25 команд за всё время',check:()=>Number(localStorage.getItem('trollPurgeCommandTotal_'+TROLL_UID)||0)>=25,effect:'🧬 ANOMALY CLONE',kind:'protocol',run:()=>rankProtocol('ANOMALY CLONE',["execute at @a run summon zombie ~2 ~ ~ {CustomName:'\"§5SPERMOGLOT\"',CustomNameVisible:1b,Glowing:1b,Tags:[\"troll_clone\"]}","execute at @a run summon zombie ~-2 ~ ~ {CustomName:'\"§5SPERMOGLOT\"',CustomNameVisible:1b,Glowing:1b,Tags:[\"troll_clone\"]}","execute at @a run particle minecraft:portal ~ ~1 ~ 0.8 1 0.8 0.05 45"])},
+            {id:9,name:'АНОМАЛЬНЫЙ ЛОРД',need:'Разблокировать PURGE PROTOCOL',check:()=>getPurgeQuest().unlocked,effect:'🩸 BLOOD MOON PROTOCOL',kind:'protocol',run:()=>rankProtocol('BLOOD MOON PROTOCOL',["time set night","weather thunder","effect give @a strength 8 1 true","effect give @a speed 8 1 true","execute at @a run particle minecraft:damage_indicator ~ ~1 ~ 0.5 0.8 0.5 0.15 35","title @a title {\"text\":\"BLOOD MOON\",\"color\":\"dark_red\",\"bold\":true}"])},
+            {id:10,name:'ROOT',need:'Достичь 100% HEAT хотя бы раз',check:()=>getPurgeQuest().peakHeat>=100,effect:'☢️ OMEGA ANOMALY',kind:'protocol',run:()=>rankProtocol('OMEGA ANOMALY',["time set night","weather thunder","effect give @a darkness 8 0 true","effect give @a glowing 8 0 true","execute at @a run summon lightning_bolt ~ ~ ~","execute at @a run particle minecraft:explosion_emitter ~ ~1 ~","playsound entity.warden.roar master @a ~ ~ ~ 6 0.5","title @a title {\"text\":\"OMEGA ANOMALY\",\"color\":\"dark_red\",\"bold\":true}"]) }
+        ];
+        function rankProtocol(name, commands){
+            showToast(`🏆 ПРОТОКОЛ: ${name}`);
+            trollLog(`RANK PROTOCOL // ${name}`,'warn');
+            commands.forEach((cmd,i)=>setTimeout(()=>sendCmd(cmd),i*260));
+        }
+        function getRankState(){
+            const key='trollRanksV1_'+TROLL_UID;
+            let st={unlocked:[]};
+            try{st=Object.assign(st,JSON.parse(localStorage.getItem(key)||'{}'));}catch{}
+            st.unlocked=Array.isArray(st.unlocked)?st.unlocked:[];
+            return st;
+        }
+        function saveRankState(st){ localStorage.setItem('trollRanksV1_'+TROLL_UID,JSON.stringify(st)); }
+        function evaluateRanks(){
+            const st=getRankState(); let changed=false;
+            RANKS.forEach(r=>{ if(r.check() && !st.unlocked.includes(r.id)){ st.unlocked.push(r.id); changed=true; showToast(`🏆 РАНГ ПОЛУЧЕН: ${r.name}`); trollLog(`RANK UNLOCKED // ${r.name}`,'good'); }});
+            st.unlocked.sort((a,b)=>a-b);
+            if(changed) saveRankState(st);
+            return st;
+        }
+        function openRanks(){
+            const st=evaluateRanks();
+            const current=Math.max(1,...st.unlocked);
+            const rows=RANKS.map(r=>{
+                const unlocked=st.unlocked.includes(r.id);
+                const isCurrent=r.id===current;
+                const status=unlocked?(isCurrent?'CURRENT':'UNLOCKED'):'LOCKED';
+                const cls=isCurrent?'current':(unlocked?'unlocked':'locked');
+                return `<div class="rank-item ${cls}">
+                    <div class="rank-top"><span class="rank-name">${r.id}. ${escapeHtml(r.name)}</span><span class="rank-status ${isCurrent?'cur':(unlocked?'ok':'lock')}">${status}</span></div>
+                    <div class="rank-effect">Уникальный эффект: <strong>${escapeHtml(r.effect)}</strong></div>
+                    <div class="rank-condition">Условие: <strong>${escapeHtml(r.need)}</strong></div>
+                    ${unlocked?`<div class="rank-use"><button class="btn" onclick="activateRankEffect(${r.id})">АКТИВИРОВАТЬ</button></div>`:''}
+                </div>`;
+            }).join('');
+            const unlockedCount=st.unlocked.length;
+            openModal('🏆 RANK SYSTEM', `<div class="rank-console"><div class="rank-headline"><div class="rank-current">ТЕКУЩИЙ РАНГ: ${RANKS[current-1]?.name||'НОВОБРАНЕЦ'}</div><div class="rank-progress-text">${unlockedCount} / ${RANKS.length} РАНГОВ</div></div><div class="rank-grid">${rows}</div></div>`);
+        }
+        function activateRankEffect(id){
+            const st=evaluateRanks(); const r=RANKS.find(x=>x.id===id);
+            if(!r || !st.unlocked.includes(id)) return;
+            if(typeof r.run==='function') r.run();
+        }
+        window.activateRankEffect=activateRankEffect;
+        document.getElementById('btn-ranks')?.addEventListener('click',openRanks);
+
+        document.getElementById("btn-rng").addEventListener("click", runRandomTroll);
+        document.getElementById("btn-last").addEventListener("click", repeatLast);
+        document.getElementById("btn-log").addEventListener("click",()=>{
+            const log = document.getElementById("event-log");
+            openModal("ЛОГ TROLL_OS", `<div class="command-preview">${Array.from(log.children).map(x=>x.textContent).join("\\n")}</div>`);
+        });
+        document.getElementById("btn-help").addEventListener("click",()=>{
+            openModal("ГОРЯЧИЕ КЛАВИШИ", `
+                <div class="command-preview">R  → TROLL RNG
+E  → EXE PROTOCOL
+L  → Открыть лог
+?  → Эта справка
+ESC → Закрыть окно
+
+Фокус на поле ввода отключает хоткеи.
+Клик по кнопке создаёт локальную FX-вспышку.\n\nПасхалки:\nEXE — EXE PROTOCOL\nR — TROLL RNG\nL — лог\n? — справка</div>`);
+        });
+        document.getElementById("btn-exe").addEventListener("click",()=>{
+            if(typeof sendCmd==="function"){
+                trollLog("EXE PROTOCOL активирован", "warn");
+                sendCmd("execute as @a at @s run summon lightning_bolt ~ ~ ~");
+                sendCmd(`title @a title ${JSON.stringify({text:`${TROLL_USER?.name || "USER"} следит за тобой...`,color:"red",bold:true})}`);
+                setTimeout(()=>sendCmd('execute as @a at @s run playsound entity.lightning_bolt.thunder master @s ~ ~ ~ 8 1'), 80);
+                screenFlash("red");
+            }
+        });
+        document.getElementById("btn-heal").addEventListener("click", autoHeal);
+        document.getElementById("btn-rain").addEventListener("click", lottRain);
+        document.getElementById("btn-nightmare").addEventListener("click", nightmare);
+        document.getElementById("btn-nuke").addEventListener("click", chaosCarousel);
+        document.getElementById("btn-rng2")?.addEventListener("click", runRandomTroll);
+        document.getElementById("btn-nightmare2")?.addEventListener("click", nightmare);
+        document.getElementById("btn-chaos2")?.addEventListener("click", chaosCarousel);
+        document.getElementById("btn-exe2")?.addEventListener("click", ()=>document.getElementById("btn-exe").click());
+
+        document.addEventListener("keydown", (e)=>{
+            const tag = (e.target && e.target.tagName || "").toLowerCase();
+            if(["input","textarea","select"].includes(tag)) return;
+            if(e.key==="r" || e.key==="к") runRandomTroll();
+            if(e.key==="e" || e.key==="у") document.getElementById("btn-exe").click();
+            if(e.key==="l" || e.key==="д") document.getElementById("btn-log").click();
+            if(e.key==="?") document.getElementById("btn-help").click();
+            if(e.key==="Escape") closeModal();
+        });
+
+        setInterval(()=>{
+            if(Math.random()<0.035){
+                const lines=['[SYS] Кто-то смотрит из матрицы.','[SYS] Не нажимай всё сразу.','[SYS] Эксперимент продолжается...','[SYS] TROLL_POWER отклонён от нормы.'];
+                trollLog(lines[Math.floor(Math.random()*lines.length)], 'warn');
+            }
+        }, 12000);
+
+        initializeIdentity();
+        renderPurgeQuest();
+
+        setTimeout(enrichTooltips, 0);
+
+        setTimeout(()=>{
+            showToast("TROLL_OS ONLINE • нажми ? для справки");
+            trollLog("Interactive Pack загружен");
+        }, 700);
+
+
+
+        // --- DEV ASSETS TAB ---
+        const devAssetsBtn = document.getElementById('btn-dev-assets');
+        const devAssetsModal = document.getElementById('dev-assets-modal');
+        const closeDevAssetsBtn = document.getElementById('btn-close-dev-assets');
+        if (devAssetsBtn && devAssetsModal) {
+            const openDevAssets = () => {
+                devAssetsModal.classList.add('open');
+                devAssetsModal.setAttribute('aria-hidden','false');
+            };
+            const closeDevAssets = () => {
+                devAssetsModal.classList.remove('open');
+                devAssetsModal.setAttribute('aria-hidden','true');
+            };
+            devAssetsBtn.addEventListener('click', openDevAssets);
+            closeDevAssetsBtn?.addEventListener('click', closeDevAssets);
+            devAssetsModal.addEventListener('click', (e) => {
+                if (e.target === devAssetsModal) closeDevAssets();
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeDevAssets();
+            });
+        }
+
+        // --- CUSTOM TOTEM LAB ---
+        (() => {
+            const fileInput = document.getElementById('totem-file');
+            const drop = document.getElementById('totem-drop');
+            const preview = document.getElementById('totem-preview');
+            const placeholder = document.getElementById('totem-placeholder');
+            const sizeEl = document.getElementById('totem-size');
+            const modelId = document.getElementById('totem-model-id');
+            const modelLabel = document.getElementById('totem-model-label');
+            const target = document.getElementById('totem-target');
+            const name = document.getElementById('totem-name');
+            const command = document.getElementById('totem-command');
+            const fileStatus = document.getElementById('totem-file-status');
+            const result = document.getElementById('totem-result');
+            const packStatus = document.getElementById('totem-pack-status');
+            let selectedFile = null;
+            let objectUrl = null;
+
+            function cleanId() {
+                let n = parseInt(modelId.value, 10);
+                if (!Number.isFinite(n) || n < 1) n = 10001;
+                if (n > 2147483647) n = 2147483647;
+                modelId.value = n;
+                modelLabel.textContent = String(n);
+                return n;
+            }
+            function updateCommand() {
+                const id = cleanId();
+                const modelKey = `troll_totem_${id}`;
+                command.textContent = `give ${target.value} minecraft:totem_of_undying[minecraft:custom_model_data={strings:[\"${modelKey}\"]}]`;
+            }
+            function setFile(file) {
+                if (!file) return;
+                if (file.size > 4 * 1024 * 1024) {
+                    fileStatus.textContent = 'Файл слишком большой: максимум 4 MB.';
+                    fileStatus.className = 'totem-status bad';
+                    return;
+                }
+                if (!/^image\/(png|jpeg|webp)$/.test(file.type)) {
+                    fileStatus.textContent = 'Нужен PNG/JPEG/WebP.';
+                    fileStatus.className = 'totem-status bad';
+                    return;
+                }
+                selectedFile = file;
+                if (objectUrl) URL.revokeObjectURL(objectUrl);
+                objectUrl = URL.createObjectURL(file);
+                preview.src = objectUrl;
+                preview.style.display = 'block';
+                placeholder.style.display = 'none';
+                const img = new Image();
+                img.onload = () => {
+                    sizeEl.textContent = `${img.naturalWidth}×${img.naturalHeight}`;
+                    fileStatus.textContent = `${file.name} • ${(file.size/1024).toFixed(1)} KB`;
+                    fileStatus.className = 'totem-status good';
+                    result.textContent = 'Текстура загружена. Можно собирать resource pack.';
+                    result.className = 'totem-status good';
+                };
+                img.src = objectUrl;
+            }
+            drop.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', e => setFile(e.target.files?.[0]));
+            ['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => {e.preventDefault(); drop.classList.add('drag');}));
+            ['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => {e.preventDefault(); drop.classList.remove('drag');}));
+            drop.addEventListener('drop', e => setFile(e.dataTransfer.files?.[0]));
+            modelId.addEventListener('input', updateCommand);
+            target.addEventListener('change', updateCommand);
+            document.getElementById('btn-totem-command').addEventListener('click', () => {
+                updateCommand();
+                result.textContent = 'Команда обновлена.';
+                result.className = 'totem-status good';
+            });
+            document.getElementById('btn-copy-totem').addEventListener('click', async () => {
+                updateCommand();
+                try { await navigator.clipboard.writeText('/' + command.textContent); result.textContent='Скопировано в буфер.'; result.className='totem-status good'; }
+                catch { result.textContent='Не удалось скопировать. Выдели команду вручную.'; result.className='totem-status bad'; }
+            });
+            document.getElementById('btn-totem-pack').addEventListener('click', async () => {
+                updateCommand();
+                if (!selectedFile) {
+                    packStatus.textContent='Сначала загрузи текстуру.';
+                    packStatus.className='totem-status bad';
+                    return;
+                }
+                if (typeof JSZip === 'undefined') {
+                    packStatus.textContent='JSZip не загрузился. Проверь интернет-соединение.';
+                    packStatus.className='totem-status bad';
+                    return;
+                }
+                const id = cleanId();
+                const modelKey = `troll_totem_${id}`;
+                const safeName = (name.value.trim() || modelKey).replace(/[^a-zA-Z0-9_-]+/g,'_').toLowerCase();
+                const textureExt = selectedFile.type === 'image/png' ? 'png' : (selectedFile.type === 'image/webp' ? 'webp' : 'png');
+                const modelJson = {
+                    "parent": "minecraft:item/generated",
+                    "textures": { "layer0": `minecraft:item/${safeName}` }
+                };
+                const itemDefinition = {
+                    "model": {
+                        "type": "minecraft:select",
+                        "property": "minecraft:custom_model_data",
+                        "cases": [
+                            {
+                                "when": modelKey,
+                                "model": {
+                                    "type": "minecraft:model",
+                                    "model": `minecraft:item/${safeName}`
+                                }
+                            }
+                        ],
+                        "fallback": {
+                            "type": "minecraft:model",
+                            "model": "minecraft:item/totem_of_undying"
+                        }
+                    }
+                };
+                try {
+                    const zip = new JSZip();
+                    zip.file('pack.mcmeta', JSON.stringify({
+                        pack:{
+                            min_format:[88,0],
+                            max_format:[88,0],
+                            description:`TROLL_OS // ${safeName} // Minecraft 26.2`
+                        }
+                    }, null, 2));
+                    zip.file(`assets/minecraft/models/item/${safeName}.json`, JSON.stringify(modelJson, null, 2));
+                    zip.file('assets/minecraft/items/totem_of_undying.json', JSON.stringify(itemDefinition, null, 2));
+                    zip.file(`assets/minecraft/textures/item/${safeName}.${textureExt}`, await selectedFile.arrayBuffer());
+                    const blob = await zip.generateAsync({type:'blob'});
+
+                    // Пытаемся сразу отправить pack в текущий мир через Fabric-мод.
+                    // Если мод/endpoint недоступен, оставляем обычное скачивание ZIP как fallback.
+                    try {
+                        const uploadResponse = await fetch(IP_ADDRESS + '/upload-resourcepack', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/zip',
+                                'ngrok-skip-browser-warning': 'true'
+                            },
+                            body: blob
+                        });
+                        if (!uploadResponse.ok) throw new Error(await uploadResponse.text());
+                        const serverMessage = await uploadResponse.text();
+                        packStatus.textContent = `✓ Resource pack установлен в мир: ${serverMessage}`;
+                        packStatus.className='totem-status good';
+                        result.textContent = 'Пакет записан в world/resourcepacks/resources.zip. Перезайди в мир или нажми F3+T для применения.';
+                        result.className='totem-status good';
+                    } catch (uploadErr) {
+                        console.warn('Auto resource-pack upload failed:', uploadErr);
+                        const a = document.createElement('a');
+                        a.href = URL.createObjectURL(blob);
+                        a.download = `TROLL_OS_TOTEM_${id}.zip`;
+                        a.click();
+                        setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+                        packStatus.textContent = 'Мод не ответил — ZIP скачан как резервный вариант.';
+                        packStatus.className='totem-status bad';
+                    }
+                } catch (err) {
+                    console.error(err);
+                    packStatus.textContent='Ошибка при сборке resource pack.';
+                    packStatus.className='totem-status bad';
+                }
+            });
+            updateCommand();
+        })();
+    </script>
+
+<style>
+.user-reset-btn{margin-left:auto;border:1px solid rgba(255,68,68,.35);background:rgba(255,68,68,.04);color:#ff6666;padding:7px 10px;font:700 10px 'Orbitron',sans-serif;letter-spacing:.8px;cursor:pointer;transition:.18s}
+.user-reset-btn:hover{border-color:#ff4444;box-shadow:0 0 14px rgba(255,68,68,.2);background:rgba(255,68,68,.1)}
+</style>
+<script>
+(function(){
+ function installReset(){
+  const toolbar=document.querySelector('.toolbar');
+  if(!toolbar||document.getElementById('btn-reset-user')) return;
+  const b=document.createElement('button');
+  b.id='btn-reset-user'; b.className='user-reset-btn'; b.textContent='☠ СБРОС ПОЛЬЗОВАТЕЛЯ';
+  b.title='Полностью удалить локальный профиль и прогресс этого браузера';
+  b.onclick=function(){
+   const ok=confirm('КРИТИЧЕСКАЯ ОПЕРАЦИЯ\n\nБудут удалены имя пользователя, UID, посещения, HEAT, статистика, задания PURGE и все локальные настройки этого браузера.\n\nПродолжить?');
+   if(!ok) return;
+   const phrase=prompt('Введите RESET для подтверждения полного сброса пользователя:');
+   if(phrase!=='RESET'){ alert('ОПЕРАЦИЯ ОТМЕНЕНА. Требовалось ввести RESET.'); return; }
+   const keys=[]; for(let i=0;i<localStorage.length;i++){ keys.push(localStorage.key(i)); }
+   keys.forEach(k=>{ if(k) localStorage.removeItem(k); });
+   sessionStorage.clear();
+   alert('ПОЛЬЗОВАТЕЛЬ ПОЛНОСТЬЮ СБРОШЕН. Сайт перезапустит регистрацию.');
+   location.reload();
+  };
+  toolbar.appendChild(b);
+ }
+ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',installReset); else installReset();
+})();
+</script>
+</body>
+</html>
